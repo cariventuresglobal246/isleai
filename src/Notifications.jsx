@@ -5,6 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRightFromBracket } from '@fortawesome/free-solid-svg-icons';
 
+const VITE_API_URL = import.meta.env.VITE_API_URL;
+
+// ==================== STYLES ====================
 const styles = {
   pageWrapper: {
     margin: 0,
@@ -47,7 +50,7 @@ const styles = {
     position: "absolute",
     right: "10px",
     top: "10px",
-    fontSize: "19.2px", // Increased by 20% from 16px
+    fontSize: "19.2px",
     color: "white",
     background: "none",
     border: "none",
@@ -55,19 +58,19 @@ const styles = {
     padding: "0",
     marginTop: "5px",
     "@media (min-width: 480px) and (max-width: 767px)": {
-      fontSize: "21.6px", // Increased by 20% from 18px
+      fontSize: "21.6px",
       right: "12px",
       top: "12px",
       marginTop: "6px",
     },
     "@media (min-width: 768px) and (max-width: 1024px)": {
-      fontSize: "24px", // Increased by 20% from 20px
+      fontSize: "24px",
       right: "15px",
       top: "15px",
       marginTop: "7px",
     },
     "@media (min-width: 1025px)": {
-      fontSize: "28.8px", // Increased by 20% from 24px
+      fontSize: "28.8px",
       right: "20px",
       top: "20px",
       marginTop: "8px",
@@ -130,54 +133,36 @@ const styles = {
   },
 };
 
+// ==================== ICONS ====================
 const icons = {
   traffic: (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="#4ade80"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2">
       <circle cx="12" cy="12" r="10" />
       <polyline points="12 6 12 12 16 14" />
     </svg>
   ),
   water: (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="#22d3ee"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2">
       <path d="M12 2C12 2 7 9 7 13a5 5 0 0 0 10 0c0-4-5-11-5-11z" />
     </svg>
   ),
   waste: (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="#fbbf24"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2">
       <rect x="3" y="6" width="18" height="14" rx="2" ry="2" />
       <line x1="3" y1="6" x2="21" y2="6" />
       <line x1="9" y1="6" x2="9" y2="20" />
     </svg>
   ),
+  ai: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2">
+      <path d="M12 2a10 10 0 0 1 10 10a10 10 0 0 1-10 10A10 10 0 0 1 2 12A10 10 0 0 1 12 2z" />
+      <path d="M9 12h6" />
+      <path d="M12 9v6" />
+    </svg>
+  ),
 };
 
+// ==================== COMPONENT ====================
 export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -187,11 +172,16 @@ export default function Notifications() {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const response = await axios.get("/api/notifications");
+        const response = await axios.get(`${VITE_API_URL}/api/notifications`, {
+          withCredentials: true, // Required for session cookie
+        });
         setNotifications(response.data);
-        setLoading(false);
       } catch (err) {
-        setError("Failed to load notifications. Please try again later.");
+        setError(
+          err.response?.data?.error ||
+            "Failed to load notifications. Please try again later."
+        );
+      } finally {
         setLoading(false);
       }
     };
@@ -204,37 +194,38 @@ export default function Notifications() {
       <div style={styles.container}>
         <div style={styles.header}>
           <h1 style={styles.headerTitle}>Notifications</h1>
-          <button
-            style={styles.returnButton}
-            onClick={() => navigate('/baje')}
-          >
-<FontAwesomeIcon
-  icon={faArrowRightFromBracket}
-  style={{
-    width: "30px",     // increase width
-    height: "30px",    // keep it proportional
-    marginTop: "28px", // push it down
-    marginRight: "35px"
-  }}
-/>
+          <button style={styles.returnButton} onClick={() => navigate('/baje')}>
+            <FontAwesomeIcon
+              icon={faArrowRightFromBracket}
+              style={{
+                width: "30px",
+                height: "30px",
+                marginTop: "28px",
+                marginRight: "35px",
+              }}
+            />
           </button>
         </div>
 
         <div style={styles.content}>
           {loading && <div style={styles.loading}>Loading notifications...</div>}
           {error && <div style={styles.error}>{error}</div>}
-          {!loading &&
-            !error &&
-            notifications.length === 0 && (
-              <div style={styles.loading}>No notifications available.</div>
-            )}
+
+          {!loading && !error && notifications.length === 0 && (
+            <div style={styles.loading}>No notifications available.</div>
+          )}
+
           {!loading &&
             !error &&
             notifications.map((note) => (
               <div key={note.id} style={styles.card}>
-                <div style={styles.iconWrapper}>{icons[note.type]}</div>
-                <div style={styles.title}>{note.title}</div>
-                <div style={styles.description}>{note.description}</div>
+                <div style={styles.iconWrapper}>
+                  {icons[note.type] || icons.ai}
+                </div>
+                <div style={styles.title}>{note.title || "Notification"}</div>
+                <div style={styles.description}>
+                  {note.description || "No details."}
+                </div>
                 <div style={styles.time}>
                   {formatDistanceToNow(new Date(note.created_at), {
                     addSuffix: true,

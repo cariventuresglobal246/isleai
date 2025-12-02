@@ -4,10 +4,12 @@ import { createClient } from '@supabase/supabase-js';
 import { TourProvider, useTour } from '@reactour/tour';
 import isleImage from '../isle4.png';
 
-const supabase = createClient(
-  'https://lgurtucciqvwgjaphdqp.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndXJ0dWNjaXF2d2dqYXBoZHFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjk2MzgzNTAsImV4cCI6MjA0NTIxNDM1MH0.I1ajlHp5b4pGL-NQzzvcVdznoiyIvps49Ws5GZHSXzk'
-);
+// Create Supabase client at module level to ensure singleton, with schema specified
+const supabaseUrl = 'https://lgurtucciqvwgjaphdqp.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndXJ0dWNjaXF2d2dqYXBoZHFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjk2MzgzNTAsImV4cCI6MjA0NTIxNDM1MH0.I1ajlHp5b4pGL-NQzzvcVdznoiyIvps49Ws5GZHSXzk';
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  db: { schema: 'onboarding' },
+});
 
 const Onboarding = () => {
   const { setIsOpen } = useTour();
@@ -67,29 +69,37 @@ const Onboarding = () => {
     } else {
       setIsLoading(true);
       try {
-        const { data: { user }, error } = await supabase.auth.getUser();
-        if (error || !user) {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
           throw new Error('User not authenticated');
         }
 
-        const { error: updateError } = await supabase.auth.updateUser({
-          data: {
-            ...user.user_metadata,
-            fullName: formData.fullName,
-            country: formData.country,
-            interests: formData.interests,
-            isFirstTimeUser: false,
-          },
-        });
+        console.log('Auth user:', user); // Debug log to confirm structure
 
-        if (updateError) {
-          throw updateError;
+        const insertData = {
+          user_id: user.id,
+          full_name: formData.fullName,
+          country: formData.country,
+          interests: formData.interests,
+          is_first_time_user: false,
+        };
+
+        const { data, error: insertError } = await supabase
+          .from('user_onboarding')
+          .insert([insertData]);
+
+        console.log('Insert result:', data); // Log success data
+
+        if (insertError) {
+          console.error('Supabase insert error:', insertError);
+          throw insertError;
         }
 
         setSuccess('Profile updated successfully!');
         localStorage.setItem('isFirstTime', 'true');
         navigate('/baje-tour', { state: { startTour: true } });
       } catch (error) {
+        console.error('Insert error:', error);
         setError(error.message || 'Failed to save profile');
       } finally {
         setIsLoading(false);
@@ -100,25 +110,33 @@ const Onboarding = () => {
   const handleSkip = async () => {
     setIsLoading(true);
     try {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
         throw new Error('User not authenticated');
       }
 
-      const { error: updateError } = await supabase.auth.updateUser({
-        data: {
-          ...user.user_metadata,
-          isFirstTimeUser: false,
-        },
-      });
+      console.log('Auth user:', user); // Debug log to confirm structure
 
-      if (updateError) {
-        throw updateError;
+      const insertData = {
+        user_id: user.id,
+        is_first_time_user: false,
+      };
+
+      const { data, error: insertError } = await supabase
+        .from('user_onboarding')
+        .insert([insertData]);
+
+      console.log('Skip insert result:', data); // Log success data
+
+      if (insertError) {
+        console.error('Supabase skip insert error:', insertError);
+        throw insertError;
       }
 
       localStorage.setItem('isFirstTime', 'true');
       navigate('/baje', { state: { startTour: true } });
     } catch (error) {
+      console.error('Skip insert error:', error);
       setError(error.message || 'Failed to skip onboarding');
     } finally {
       setIsLoading(false);
@@ -157,7 +175,7 @@ const Onboarding = () => {
 
   return (
     <>
-      <style jsx>{`
+      <style jsx="true">{`
         body {
             background: var(--bg-gradient);
          --bg-gradient: linear-gradient(135deg, #000000, #1E90FF);

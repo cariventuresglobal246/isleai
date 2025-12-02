@@ -1,38 +1,87 @@
+// routes/notify.js
+import express from 'express';
+import { createClient } from '@supabase/supabase-js';
+import { isAuthenticated } from './login.js';
 
-import { Router } from "express";
-import { createClient } from "@supabase/supabase-js";
+const router = express.Router();
 
-const router = Router();
-
-// Supabase REST client
-const supabase = createClient(
-  process.env.SUPABASE_URL || "https://lgurtucciqvwgjaphdqp.supabase.co",
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndXJ0dWNjaXF2d2dqYXBoZHFwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcyOTYzODM1MCwiZXhwIjoyMDQ1MjE0MzUwfQ.KqpLlaKcaipG6wqg1lcNrhzUQW_r_uPZXWAmGxZFzv8"
-);
-
-// Validate credentials
+// Validate required env var
 if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.error("❌ SUPABASE_SERVICE_ROLE_KEY is missing in environment variables.");
+  console.error('Missing SUPABASE_SERVICE_ROLE_KEY in environment variables');
   process.exit(1);
 }
 
-router.get("/notifications", async (req, res) => {
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+// GET /api/notifications — fetch user's notifications
+router.get('/notifications', isAuthenticated, async (req, res) => {
   try {
-    console.log("Attempting Supabase REST API...");
+    console.log(`Fetching notifications for user: ${req.user.id}`); // Debug log
+
     const { data, error } = await supabase
-      .from("notifications")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) {
-      console.error("❌ Supabase REST API failed:", error);
-      throw error;
+      .from('notifications')
+      .select('id, title, description, type, created_at')
+      .eq('user_id', req.user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    console.log(`Found ${data?.length || 0} notifications`); // Debug log
+
+    // Optional: If no user-specific results, log a warning (remove in prod)
+    if (!data || data.length === 0) {
+      console.warn(`No notifications for user ${req.user.id}. Check if user_id is backfilled in DB.`);
     }
-    console.log("✅ Supabase REST API successful, rows:", data.length);
-    return res.json(data);
+
+    return res.json(data || []);
   } catch (err) {
-    console.error("❌ Error in /api/notifications:", err);
-    res.status(500).json({ error: "Failed to fetch notifications", details: err.message });
+    console.error('Supabase GET error:', err);
+    return res.status(500).json({
+      error: 'Failed to fetch notifications',
+      details: err.message,
+    });
+  }
+});
+
+// POST /api/notifications — create a new notification
+router.post('/notifications', isAuthenticated, async (req, res) => {
+  const { title, description, type = 'ai' } = req.body;
+
+  // Validation
+  if (!title || typeof title !== 'string' || title.trim().length === 0) {
+    return res.status(400).json({ error: 'Title is required' });
+  }
+
+  const cleanTitle = title.trim();
+  const cleanDesc = description?.trim() || '';
+  const cleanType = type.trim().toLowerCase();
+
+  try {
+    const { data, error } = await supabase
+      .from('notifications')
+      .insert({
+        user_id: req.user.id,
+        title: cleanTitle,
+        description: cleanDesc,
+        type: cleanType,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    console.log(`Created notification for user ${req.user.id}: ${cleanTitle}`); // Debug log
+
+    return res.status(201).json(data);
+  } catch (err) {
+    console.error('Supabase POST error:', err);
+    return res.status(500).json({
+      error: 'Failed to create notification',
+      details: err.message,
+    });
   }
 });
 

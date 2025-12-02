@@ -1,8 +1,0 @@
-/* Main CSS file - imports and core variables only */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('./styles/variables.css');
-@import url('./styles/base.css');
-@import url('./styles/sidebar.css');
-@import url('./styles/main-content.css');
-@import url('./styles/components.css');
-@import url('./styles/responsive.css');

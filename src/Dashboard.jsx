@@ -736,14 +736,14 @@ const Dashboard = () => {
           /* Tablet Portrait and Landscape (768px to 1024px) */
           @media (min-width: 768px) and (max-width: 1024px) {
             .return-note:hover {
-              transform: scale(1.04);
+              transform: scale(1.03);
             }
           }
 
           /* Laptop/Desktop (1025px to 1280px) */
           @media (min-width: 1025px) and (max-width: 1280px) {
             .return-note:hover {
-              transform: scale(1.05);
+              transform: scale(1.03);
             }
           }
 
@@ -751,346 +751,11 @@ const Dashboard = () => {
           @media (min-width: 1281px) {
             .return-note:hover {
               transform: scale(1.05);
-            }
-          }
-
-          @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-
-          /* Mobile (425px and below) */
-          @media (max-width: 425px) {
-            @keyframes fadeIn {
-              from { opacity: 0; transform: translateY(-8px); }
-              to { opacity: 1; transform: translateY(0); }
-            }
-          }
-
-          /* Mobile Portrait (320px to 479px) */
-          @media (min-width: 320px) and (max-width: 479px) {
-            @keyframes fadeIn {
-              from { opacity: 0; transform: translateY(-8px); }
-              to { opacity: 1; transform: translateY(0); }
-            }
-          }
-
-          /* Mobile Landscape (481px to 767px) */
-          @media (min-width: 481px) and (max-width: 767px) {
-            @keyframes fadeIn {
-              from { opacity: 0; transform: translateY(-8px); }
-              to { opacity: 1; transform: translateY(0); }
-            }
-          }
-
-          /* Tablet Portrait and Landscape (768px to 1024px) */
-          @media (min-width: 768px) and (max-width: 1024px) {
-            @keyframes fadeIn {
-              from { opacity: 0; transform: translateY(-9px); }
-              to { opacity: 1; transform: translateY(0); }
-            }
-          }
-
-          /* Laptop/Desktop (1025px to 1280px) */
-          @media (min-width: 1025px) and (max-width: 1280px) {
-            @keyframes fadeIn {
-              from { opacity: 0; transform: translateY(-10px); }
-              to { opacity: 1; transform: translateY(0); }
-            }
-          }
-
-          /* Desktop (1281px and up) */
-          @media (min-width: 1281px) {
-            @keyframes fadeIn {
-              from { opacity: 0; transform: translateY(-10px); }
-              to { opacity: 1; transform: translateY(0); }
-            }
-          }
-
-          .sidebar-nav {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            width: 100%;
-            align-items: stretch;
-          }
-
-          /* Mobile (425px and below) */
-          @media (max-width: 425px) {
-            .sidebar-nav {
-              gap: 6px;
-            }
-          }
-
-          /* Mobile Portrait (320px to 479px) */
-          @media (min-width: 320px) and (max-width: 479px) {
-            .sidebar-nav {
-              gap: 6px;
-            }
-          }
-
-          /* Mobile Landscape (481px to 767px) */
-          @media (min-width: 481px) and (max-width: 767px) {
-            .sidebar-nav {
-              gap: 6px;
-            }
-          }
-
-          /* Tablet Portrait and Landscape (768px to 1024px) */
-          @media (min-width: 768px) and (max-width: 1024px) {
-            .sidebar-nav {
-              gap: 7px;
-            }
-          }
-
-          /* Laptop/Desktop (1025px to 1280px) */
-          @media (min-width: 1025px) and (max-width: 1280px) {
-            .sidebar-nav {
-              gap: 8px;
-            }
-          }
-
-          /* Desktop (1281px and up) */
-          @media (min-width: 1281px) {
-            .sidebar-nav {
-              gap: 8px;
-            }
-          }
-
-          .sidebar-nav a {
-            padding: 12px 16px;
-            color: var(--text-secondary);
-            text-decoration: none;
-            border-radius: var(--radius);
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
-            cursor: pointer;
-            text-align: left;
-          }
-
-          /* Mobile (425px and below) */
-          @media (max-width: 425px) {
-            .sidebar-nav a {
-              padding: 8px 10px;
-              font-size: 12px;
-            }
-          }
-
-          /* Mobile Portrait (320px to 479px) */
-          @media (min-width: 320px) and (max-width: 479px) {
-            .sidebar-nav a {
-              padding: 8px 10px;
-              font-size: 12px;
-            }
-          }
-
-          /* Mobile Landscape (481px to 767px) */
-          @media (min-width: 481px) and (max-width: 767px) {
-            .sidebar-nav a {
-              padding: 9px 11px;
-              font-size: 13px;
-            }
-          }
-
-          /* Tablet Portrait and Landscape (768px to 1024px) */
-          @media (min-width: 768px) and (max-width: 1024px) {
-            .sidebar-nav a {
-              padding: 10px 12px;
-              font-size: 13px;
-            }
-          }
-
-          /* Laptop/Desktop (1025px to 1280px) */
-          @media (min-width: 1025px) and (max-width: 1280px) {
-            .sidebar-nav a {
-              padding: 11px 14px;
-              font-size: 14px;
-            }
-          }
-
-          /* Desktop (1281px and up) */
-          @media (min-width: 1281px) {
-            .sidebar-nav a {
-              padding: 12px 16px;
-              font-size: 14px;
-            }
-          }
-
-          .sidebar-nav a:hover {
-            background: var(--surface-hover);
-            color: var(--text-primary);
-          }
-
-          /* Mobile (425px and below) */
-          @media (max-width: 425px) {
-            .sidebar-nav a:hover {
-              background: var(--surface-hover);
-              color: var(--text-primary);
-            }
-          }
-
-          /* Mobile Portrait (320px to 479px) */
-          @media (min-width: 320px) and (max-width: 479px) {
-            .sidebar-nav a:hover {
-              background: var(--surface-hover);
-              color: var(--text-primary);
-            }
-          }
-
-          /* Mobile Landscape (481px to 767px) */
-          @media (min-width: 481px) and (max-width: 767px) {
-            .sidebar-nav a:hover {
-              background: var(--surface-hover);
-              color: var(--text-primary);
-            }
-          }
-
-          /* Tablet Portrait and Landscape (768px to 1024px) */
-          @media (min-width: 768px) and (max-width: 1024px) {
-            .sidebar-nav a:hover {
-              background: var(--surface-hover);
-              color: var(--text-primary);
-            }
-          }
-
-          /* Laptop/Desktop (1025px to 1280px) */
-          @media (min-width: 1025px) and (max-width: 1280px) {
-            .sidebar-nav a:hover {
-              background: var(--surface-hover);
-              color: var(--text-primary);
-            }
-          }
-
-          /* Desktop (1281px and up) */
-          @media (min-width: 1281px) {
-            .sidebar-nav a:hover {
-              background: var(--surface-hover);
-              color: var(--text-primary);
-            }
-          }
-
-          .sidebar-nav a.active {
-            color: var(--primary-color);
-            background: rgba(99, 102, 241, 0.1);
-          }
-
-          /* Mobile (425px and below) */
-          @media (max-width: 425px) {
-            .sidebar-nav a.active {
-              color: var(--primary-color);
-              background: rgba(99, 102, 241, 0.1);
-            }
-          }
-
-          /* Mobile Portrait (320px to 479px) */
-          @media (min-width: 320px) and (max-width: 479px) {
-            .sidebar-nav a.active {
-              color: var(--primary-color);
-              background: rgba(99, 102, 241, 0.1);
-              margin-right: 20px;
-            }
-          }
-
-          /* Mobile Landscape (481px to 767px) */
-          @media (min-width: 481px) and (max-width: 767px) {
-            .sidebar-nav a.active {
-              color: var(--primary-color);
-              background: rgba(99, 102, 241, 0.1);
-            }
-          }
-
-          /* Tablet Portrait and Landscape (768px to 1024px) */
-          @media (min-width: 768px) and (max-width: 1024px) {
-            .sidebar-nav a.active {
-              color: var(--primary-color);
-              background: rgba(99, 102, 241, 0.1);
-            }
-          }
-
-          /* Laptop/Desktop (1025px to 1280px) */
-          @media (min-width: 1025px) and (max-width: 1280px) {
-            .sidebar-nav a.active {
-              color: var(--primary-color);
-              background: rgba(99, 102, 241, 0.1);
-            }
-          }
-
-          /* Desktop (1281px and up) */
-          @media (min-width: 1281px) {
-            .sidebar-nav a.active {
-              color: var(--primary-color);
-              background: rgba(99, 102, 241, 0.1);
-
-            }
-          }
-
-          .main-content {
-            flex: 1;
-            padding: 32px;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-          }
-
-          /* Mobile (425px and below) */
-          @media (max-width: 425px) {
-            .main-content {
-              padding: 12px;
-              gap: 12px;
-              width: 100%;
-              min-height: calc(100vh - 60px - 16px - 1px); /* Adjust for sidebar-logo, sidebar padding, and border */
-            }
-          }
-
-          /* Mobile Portrait (320px to 479px) */
-          @media (min-width: 320px) and (max-width: 479px) {
-            .main-content {
-              padding: 12px;
-              gap: 12px;
-              width: 100%;
-              min-height: calc(100vh - 60px - 16px - 1px); /* Adjust for sidebar-logo, sidebar padding, and border */
-            }
-          }
-
-          /* Mobile Landscape (481px to 767px) */
-          @media (min-width: 481px) and (max-width: 767px) {
-            .main-content {
-              padding: 14px;
-              gap: 14px;
-            }
-          }
-
-          /* Tablet Portrait and Landscape (768px to 1024px) */
-          @media (min-width: 768px) and (max-width: 1024px) {
-            .main-content {
-              padding: 16px;
-              gap: 16px;
-            }
-          }
-
-          /* Laptop/Desktop (1025px to 1280px) */
-          @media (min-width: 1025px) and (max-width: 1280px) {
-            .main-content {
-              padding: 20px;
-              gap: 20px;
-            }
-          }
-
-          /* Desktop (1281px and up) */
-          @media (min-width: 1281px) {
-            .main-content {
-              padding: 32px;
-              gap: 24px;
             }
           }
 
           .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             padding-bottom: 16px;
-            border-bottom: 1px solid var(--border);
           }
 
           /* Mobile (425px and below) */
@@ -1142,828 +807,189 @@ const Dashboard = () => {
             align-items: center;
             gap: 8px;
           }
+        `}
+      </style>
 
-          /* Mobile (425px and below) */
-          @media (max-width: 425px) {
-            .header-title {
-              font-size: 16px;
-              gap: 6px;
-            }
-          }
-
-          /* Mobile Portrait (320px to 479px) */
-          @media (min-width: 320px) and (max-width: 479px) {
-            .header-title {
-              font-size: 16px;
-              gap: 6px;
-            }
-          }
-
-          /* Mobile Landscape (481px to 767px) */
-          @media (min-width: 481px) and (max-width: 767px) {
-            .header-title {
-              font-size: 18px;
-              gap: 6px;
-            }
-          }
-
-          /* Tablet Portrait and Landscape (768px to 1024px) */
-          @media (min-width: 768px) and (max-width: 1024px) {
-            .header-title {
-              font-size: 18px;
-              gap: 7px;
-            }
-          }
-
-          /* Laptop/Desktop (1025px to 1280px) */
-          @media (min-width: 1025px) and (max-width: 1280px) {
-            .header-title {
-              font-size: 19px;
-              gap: 8px;
-            }
-          }
-
-          /* Desktop (1281px and up) */
-          @media (min-width: 1281px) {
-            .header-title {
-              font-size: 20px;
-              gap: 8px;
-            }
-          }
-
-          .header-title-icon {
-            width: 24px;
-            height: 24px;
-            color: var(--primary-color);
-          }
-
-          /* Mobile (425px and below) */
-          @media (max-width: 425px) {
-            .header-title-icon {
-              width: 18px;
-              height: 18px;
-            }
-          }
-
-          /* Mobile Portrait (320px to 479px) */
-          @media (min-width: 320px) and (max-width: 479px) {
-            .header-title-icon {
-              width: 18px;
-              height: 18px;
-            }
-          }
-
-          /* Mobile Landscape (481px to 767px) */
-          @media (min-width: 481px) and (max-width: 767px) {
-            .header-title-icon {
-              width: 20px;
-              height: 20px;
-            }
-          }
-
-          /* Tablet Portrait and Landscape (768px to 1024px) */
-          @media (min-width: 768px) and (max-width: 1024px) {
-            .header-title-icon {
-              width: 22px;
-              height: 22px;
-            }
-          }
-
-          /* Laptop/Desktop (1025px to 1280px) */
-          @media (min-width: 1025px) and (max-width: 1280px) {
-            .header-title-icon {
-              width: 23px;
-              height: 23px;
-            }
-          }
-
-          /* Desktop (1281px and up) */
-          @media (min-width: 1281px) {
-            .header-title-icon {
-              width: 24px;
-              height: 24px;
-            }
-          }
-
-         
-
-          .header-actions a {
-            color: var(--primary-color);
-            text-decoration: none;
-            font-size: 14px;
-            margin-left: 16px;
-            cursor: pointer;
-          }
-
-          /* Mobile (425px and below) */
-          @media (max-width: 425px) {
-         
-            .header-actions a {
-              font-size: 12px;
-              margin-right: 4px;
-            }
-          }
-
-          /* Mobile Portrait (320px to 479px) */
-          @media (min-width: 320px) and (max-width: 479px) {
-            .header-actions {
+      {/* Start of New JSX and CSS to Complete the Component */}
+      <div className="sidebar">
+        <img
+          src="/logo.png" // Placeholder logo path; replace with actual path
+          alt="Logo"
+          className="sidebar-logo"
+          onClick={handleLogoClick}
+        />
+        <nav className="sidebar-nav">
+          <button
+            className={`sidebar-link ${activeSection === 'billing' ? 'active' : ''}`}
+            onClick={() => handleNavClick('billing')}
+          >
+            Billing & Usage
+          </button>
+          <button
+            className={`sidebar-link ${activeSection === 'my-day' ? 'active' : ''}`}
+            onClick={() => handleNavClick('my-day')}
+          >
+            My Day
+          </button>
+          <button className="sidebar-link" onClick={handleSettings}>
+            Settings
+          </button>
+          <button className="sidebar-link" onClick={handleLogout}>
+            Logout
+          </button>
+        </nav>
+      </div>
+      <div className="main-content">
+        {showReturnNote && (
+          <div className="return-note" onClick={handleReturnToChat}>
+            Return To Chat
+          </div>
+        )}
+        {renderContent()}
+      </div>
+      <style>
+        {`
+          .sidebar-nav {
             display: flex;
-            align-items: center;
-            gap: 1px;
-            }
-          .header-actions a {
-              font-size: 12px;
-              margin-left: 4px;
-              margin-right: 20px;
-              gap: 4px;
-              padding-left: 1px;
-            }
-          }
-
-          /* Mobile Landscape (481px to 767px) */
-          @media (min-width: 481px) and (max-width: 767px) {
-            .header-actions a {
-              font-size: 13px;
-              margin-left: 10px;
-            }
-          }
-
-          /* Tablet Portrait and Landscape (768px to 1024px) */
-          @media (min-width: 768px) and (max-width: 1024px) {
-            .header-actions a {
-              font-size: 13px;
-              margin-left: 12px;
-            }
-          }
-
-          /* Laptop/Desktop (1025px to 1280px) */
-          @media (min-width: 1025px) and (max-width: 1280px) {
-            .header-actions a {
-              font-size: 14px;
-              margin-left: 14px;
-            }
-          }
-
-          /* Desktop (1281px and up) */
-          @media (min-width: 1281px) {
-            .header-actions a {
-              font-size: 14px;
-              margin-left: 16px;
-            }
-          }
-
-          .header-actions a:hover {
-            color: #818cf8;
-          }
-
-          /* Mobile (425px and below) */
-          @media (max-width: 425px) {
-            .header-actions a:hover {
-              color: #818cf8;
-            }
-          }
-
-          /* Mobile Portrait (320px to 479px) */
-          @media (min-width: 320px) and (max-width: 479px) {
-            .header-actions a:hover {
-              color: #818cf8;
-            }
-          }
-
-          /* Mobile Landscape (481px to 767px) */
-          @media (min-width: 481px) and (max-width: 767px) {
-            .header-actions a:hover {
-              color: #818cf8;
-            }
-          }
-
-          /* Tablet Portrait and Landscape (768px to 1024px) */
-          @media (min-width: 768px) and (max-width: 1024px) {
-            .header-actions a:hover {
-              color: #818cf8;
-            }
-          }
-
-          /* Laptop/Desktop (1025px to 1280px) */
-          @media (min-width: 1025px) and (max-width: 1280px) {
-            .header-actions a:hover {
-              color: #818cf8;
-            }
-          }
-
-          /* Desktop (1281px and up) */
-          @media (min-width: 1281px) {
-            .header-actions a:hover {
-              color: #818cf8;
-            }
-          }
-
-          .billing-section {
-            background: var(--surface);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-md);
-            padding: 24px;
+            flex-direction: column;
+            gap: 8px;
             width: 100%;
-            box-sizing: border-box;
           }
 
-          /* Mobile (425px and below) */
-          @media (max-width: 425px) {
-            .billing-section {
-              padding: 12px;
-              width: 100%;
-              min-height: calc(100vh - 60px - 12px - 1px - 12px); /* Adjust for sidebar-logo, sidebar padding, border, header padding */
-              box-sizing: border-box;
-            }
+          .sidebar-link {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 500;
+            padding: 12px 16px;
+            text-align: left;
+            cursor: pointer;
+            border-radius: var(--radius);
+            transition: background 0.2s ease, color 0.2s ease;
           }
 
-          /* Mobile Portrait (320px to 479px) */
-          @media (min-width: 320px) and (max-width: 479px) {
-            .billing-section {
-              padding: 12px;
-              width: 95%;
-              min-height: calc(100vh - 60px - 12px - 1px - 12px); /* Adjust for sidebar-logo, sidebar padding, border, header padding */
-              box-sizing: border-box;
-            }
+          .sidebar-link:hover {
+            background: var(--surface-hover);
           }
 
-          /* Mobile Landscape (481px to 767px) */
-          @media (min-width: 481px) and (max-width: 767px) {
-            .billing-section {
-              padding: 14px;
-              width: 100%;
-              box-sizing: border-box;
-            }
+          .sidebar-link.active {
+            background: var(--primary-color);
+            color: var(--text-primary);
           }
 
-          /* Tablet Portrait and Landscape (768px to 1024px) */
-          @media (min-width: 768px) and (max-width: 1024px) {
-            .billing-section {
-              padding: 16px;
-              width: 100%;
-              box-sizing: border-box;
-            }
-          }
-
-          /* Laptop/Desktop (1025px to 1280px) */
-          @media (min-width: 1025px) and (max-width: 1280px) {
-            .billing-section {
-              padding: 20px;
-              width: 100%;
-              box-sizing: border-box;
-            }
-          }
-
-          /* Desktop (1281px and up) */
-          @media (min-width: 1281px) {
-            .billing-section {
-              padding: 24px;
-              width: 100%;
-              box-sizing: border-box;
-            }
-          }
-
-          .billing-section-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 16px;
-          }
-
-          /* Mobile (425px and below) */
-          @media (max-width: 425px) {
-            .billing-section-title {
-              font-size: 16px;
-              margin-bottom: 12px;
-            }
-          }
-
-          /* Mobile Portrait (320px to 479px) */
-          @media (min-width: 320px) and (max-width: 479px) {
-            .billing-section-title {
-              font-size: 16px;
-              margin-bottom: 12px;
-            }
-          }
-
-          /* Mobile Landscape (481px to 767px) */
-          @media (min-width: 481px) and (max-width: 767px) {
-            .billing-section-title {
-              font-size: 17px;
-              margin-bottom: 12px;
-            }
-          }
-
-          /* Tablet Portrait and Landscape (768px to 1024px) */
-          @media (min-width: 768px) and (max-width: 1024px) {
-            .billing-section-title {
-              font-size: 17px;
-              margin-bottom: 14px;
-            }
-          }
-
-          /* Laptop/Desktop (1025px to 1280px) */
-          @media (min-width: 1025px) and (max-width: 1280px) {
-            .billing-section-title {
-              font-size: 18px;
-              margin-bottom: 15px;
-            }
-          }
-
-          /* Desktop (1281px and up) */
-          @media (min-width: 1281px) {
-            .billing-section-title {
-              font-size: 18px;
-              margin-bottom: 16px;
-            }
-          }
-
-          .billing-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          .main-content {
+            flex: 1;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
             gap: 16px;
           }
 
           /* Mobile (425px and below) */
           @media (max-width: 425px) {
-            .billing-grid {
-              grid-template-columns: 1fr;
-              gap: 12px;
-            }
-          }
-
-          /* Mobile Portrait (320px to 479px) */
-          @media (min-width: 320px) and (max-width: 479px) {
-            .billing-grid {
-              grid-template-columns: 1fr;
-              gap: 12px;
-            }
-          }
-
-          /* Mobile Landscape (481px to 767px) */
-          @media (min-width: 481px) and (max-width: 767px) {
-            .billing-grid {
-              grid-template-columns: 1fr;
-              gap: 12px;
-            }
-          }
-
-          /* Tablet Portrait and Landscape (768px to 1024px) */
-          @media (min-width: 768px) and (max-width: 1024px) {
-            .billing-grid {
-              grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-              gap: 14px;
-            }
-          }
-
-          /* Laptop/Desktop (1025px to 1280px) */
-          @media (min-width: 1025px) and (max-width: 1280px) {
-            .billing-grid {
-              grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-              gap: 15px;
-            }
-          }
-
-          /* Desktop (1281px and up) */
-          @media (min-width: 1281px) {
-            .billing-grid {
-              grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-              gap: 16px;
-            }
-          }
-
-          .billing-card {
-            background: #1e293b;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-          }
-
-          /* Mobile (425px and below) */
-          @media (max-width: 425px) {
-            .billing-card {
+            .main-content {
               padding: 12px;
             }
           }
 
           /* Mobile Portrait (320px to 479px) */
           @media (min-width: 320px) and (max-width: 479px) {
-            .billing-card {
+            .main-content {
               padding: 12px;
             }
           }
 
           /* Mobile Landscape (481px to 767px) */
           @media (min-width: 481px) and (max-width: 767px) {
-            .billing-card {
+            .main-content {
               padding: 14px;
             }
           }
 
           /* Tablet Portrait and Landscape (768px to 1024px) */
           @media (min-width: 768px) and (max-width: 1024px) {
-            .billing-card {
+            .main-content {
               padding: 16px;
             }
           }
 
           /* Laptop/Desktop (1025px to 1280px) */
           @media (min-width: 1025px) and (max-width: 1280px) {
-            .billing-card {
-              padding: 18px;
+            .main-content {
+              padding: 20px;
             }
           }
 
           /* Desktop (1281px and up) */
           @media (min-width: 1281px) {
-            .billing-card {
-              padding: 20px;
+            .main-content {
+              padding: 24px;
             }
+          }
+
+          .billing-section {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+          }
+
+          .billing-section-title {
+            font-size: 24px;
+            font-weight: 600;
+          }
+
+          .billing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+          }
+
+          .billing-card {
+            background: var(--surface);
+            padding: 16px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
           }
 
           .billing-value {
             font-size: 28px;
             font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-          }
-
-          /* Mobile (425px and below) */
-          @media (max-width: 425px) {
-            .billing-value {
-              font-size: 20px;
-              margin-bottom: 6px;
-            }
-          }
-
-          /* Mobile Portrait (320px to 479px) */
-          @media (min-width: 320px) and (max-width: 479px) {
-            .billing-value {
-              font-size: 20px;
-              margin-bottom: 6px;
-            }
-          }
-
-          /* Mobile Landscape (481px to 767px) */
-          @media (min-width: 481px) and (max-width: 767px) {
-            .billing-value {
-              font-size: 22px;
-              margin-bottom: 6px;
-            }
-          }
-
-          /* Tablet Portrait and Landscape (768px to 1024px) */
-          @media (min-width: 768px) and (max-width: 1024px) {
-            .billing-value {
-              font-size: 24px;
-              margin-bottom: 7px;
-            }
-          }
-
-          /* Laptop/Desktop (1025px to 1280px) */
-          @media (min-width: 1025px) and (max-width: 1280px) {
-            .billing-value {
-              font-size: 26px;
-              margin-bottom: 8px;
-            }
-          }
-
-          /* Desktop (1281px and up) */
-          @media (min-width: 1281px) {
-            .billing-value {
-              font-size: 28px;
-              margin-bottom: 8px;
-            }
+            color: var(--primary-color);
           }
 
           .billing-label {
-            font-size: 14px;
+            font-size: 16px;
             color: var(--text-secondary);
-          }
-
-          /* Mobile (425px and below) */
-          @media (max-width: 425px) {
-            .billing-label {
-              font-size: 12px;
-            }
-          }
-
-          /* Mobile Portrait (320px to 479px) */
-          @media (min-width: 320px) and (max-width: 479px) {
-            .billing-label {
-              font-size: 12px;
-            }
-          }
-
-          /* Mobile Landscape (481px to 767px) */
-          @media (min-width: 481px) and (max-width: 767px) {
-            .billing-label {
-              font-size: 13px;
-            }
-          }
-
-          /* Tablet Portrait and Landscape (768px to 1024px) */
-          @media (min-width: 768px) and (max-width: 1024px) {
-            .billing-label {
-              font-size: 13px;
-            }
-          }
-
-          /* Laptop/Desktop (1025px to 1280px) */
-          @media (min-width: 1025px) and (max-width: 1280px) {
-            .billing-label {
-              font-size: 14px;
-            }
-          }
-
-          /* Desktop (1281px and up) */
-          @media (min-width: 1281px) {
-            .billing-label {
-              font-size: 14px;
-            }
+            margin: 8px 0;
           }
 
           .billing-change {
-            font-size: 12px;
-            margin-top: 8px;
             display: flex;
             align-items: center;
-            gap: 4px;
-          }
-
-          /* Mobile (425px and below) */
-          @media (max-width: 425px) {
-            .billing-change {
-              font-size: 10px;
-              margin-top: 6px;
-              gap: 3px;
-            }
-          }
-
-          /* Mobile Portrait (320px to 479px) */
-          @media (min-width: 320px) and (max-width: 479px) {
-            .billing-change {
-              font-size: 10px;
-              margin-top: 6px;
-              gap: 3px;
-            }
-          }
-
-          /* Mobile Landscape (481px to 767px) */
-          @media (min-width: 481px) and (max-width: 767px) {
-            .billing-change {
-              font-size: 11px;
-              margin-top: 6px;
-              gap: 3px;
-            }
-          }
-
-          /* Tablet Portrait and Landscape (768px to 1024px) */
-          @media (min-width: 768px) and (max-width: 1024px) {
-            .billing-change {
-              font-size: 11px;
-              margin-top: 7px;
-              gap: 4px;
-            }
-          }
-
-          /* Laptop/Desktop (1025px to 1280px) */
-          @media (min-width: 1025px) and (max-width: 1280px) {
-            .billing-change {
-              font-size: 12px;
-              margin-top: 8px;
-              gap: 4px;
-            }
-          }
-
-          /* Desktop (1281px and up) */
-          @media (min-width: 1281px) {
-            .billing-change {
-              font-size: 12px;
-              margin-top: 8px;
-              gap: 4px;
-            }
-          }
-
-          .billing-change-icon {
-            width: 16px;
-            height: 16px;
-          }
-
-          /* Mobile (425px and below) */
-          @media (max-width: 425px) {
-            .billing-change-icon {
-              width: 12px;
-              height: 12px;
-            }
-          }
-
-          /* Mobile Portrait (320px to 479px) */
-          @media (min-width: 320px) and (max-width: 479px) {
-            .billing-change-icon {
-              width: 12px;
-              height: 12px;
-            }
-          }
-
-          /* Mobile Landscape (481px to 767px) */
-          @media (min-width: 481px) and (max-width: 767px) {
-            .billing-change-icon {
-              width: 13px;
-              height: 13px;
-            }
-          }
-
-          /* Tablet Portrait and Landscape (768px to 1024px) */
-          @media (min-width: 768px) and (max-width: 1024px) {
-            .billing-change-icon {
-              width: 14px;
-              height: 14px;
-            }
-          }
-
-          /* Laptop/Desktop (1025px to 1280px) */
-          @media (min-width: 1025px) and (max-width: 1280px) {
-            .billing-change-icon {
-              width: 15px;
-              height: 15px;
-            }
-          }
-
-          /* Desktop (1281px and up) */
-          @media (min-width: 1281px) {
-            .billing-change-icon {
-              width: 16px;
-              height: 16px;
-            }
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
           }
 
           .billing-change.positive {
             color: var(--success-color);
           }
 
-          /* Mobile (425px and below) */
-          @media (max-width: 425px) {
-            .billing-change.positive {
-              color: var(--success-color);
-            }
-          }
-
-          /* Mobile Portrait (320px to 479px) */
-          @media (min-width: 320px) and (max-width: 479px) {
-            .billing-change.positive {
-              color: var(--success-color);
-            }
-          }
-
-          /* Mobile Landscape (481px to 767px) */
-          @media (min-width: 481px) and (max-width: 767px) {
-            .billing-change.positive {
-              color: var(--success-color);
-            }
-          }
-
-          /* Tablet Portrait and Landscape (768px to 1024px) */
-          @media (min-width: 768px) and (max-width: 1024px) {
-            .billing-change.positive {
-              color: var(--success-color);
-            }
-          }
-
-          /* Laptop/Desktop (1025px to 1280px) */
-          @media (min-width: 1025px) and (max-width: 1280px) {
-            .billing-change.positive {
-              color: var(--success-color);
-            }
-          }
-
-          /* Desktop (1281px and up) */
-          @media (min-width: 1281px) {
-            .billing-change.positive {
-              color: var(--success-color);
-            }
-          }
-
           .billing-change.warning {
             color: var(--warning-color);
           }
 
-          /* Mobile (425px and below) */
-          @media (max-width: 425px) {
-            .billing-change.warning {
-              color: var(--warning-color);
-            }
-          }
-
-          /* Mobile Portrait (320px to 479px) */
-          @media (min-width: 320px) and (max-width: 479px) {
-            .billing-change.warning {
-              color: var(--warning-color);
-            }
-          }
-
-          /* Mobile Landscape (481px to 767px) */
-          @media (min-width: 481px) and (max-width: 767px) {
-            .billing-change.warning {
-              color: var(--warning-color);
-            }
-          }
-
-          /* Tablet Portrait and Landscape (768px to 1024px) */
-          @media (min-width: 768px) and (max-width: 1024px) {
-            .billing-change.warning {
-              color: var(--warning-color);
-            }
-          }
-
-          /* Laptop/Desktop (1025px to 1280px) */
-          @media (min-width: 1025px) and (max-width: 1280px) {
-            .billing-change.warning {
-              color: var(--warning-color);
-            }
-          }
-
-          /* Desktop (1281px and up) */
-          @media (min-width: 1281px) {
-            .billing-change.warning {
-              color: var(--warning-color);
-            }
+          .billing-change-icon {
+            width: 16px;
+            height: 16px;
           }
         `}
       </style>
-      <div className="dashboard-container">
-        <div className="sidebar">
-          <a onClick={handleLogoClick}>
-            <img src="/isle4.png" alt="ISLE Logo" className="sidebar-logo" />
-          </a>
-          {showReturnNote && (
-            <a className="return-note" onClick={handleReturnToChat}>
-              Return To Chat
-            </a>
-          )}
-          <nav className="sidebar-nav">
-            <a
-              onClick={() => handleNavClick('my-day')}
-              className={activeSection === 'my-day' ? 'active' : ''}
-            >
-              My Day
-            </a>
-            <a
-              onClick={() => handleNavClick('billing')}
-              className={activeSection === 'billing' ? 'active' : ''}
-            >
-              Billing & Usage
-            </a>
-          </nav>
-        </div>
-
-        <div className="main-content">
-          <div className="header">
-            <h1 className="header-title">
-              {activeSection === 'my-day' ? (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  className="header-title-icon"
-                >
-                  <circle cx="12" cy="12" r="5" />
-                  <line x1="12" y1="1" x2="12" y2="3" />
-                  <line x1="12" y1="21" x2="12" y2="23" />
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                  <line x1="1" y1="12" x2="3" y2="12" />
-                  <line x1="21" y1="12" x2="23" y2="12" />
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                </svg>
-              ) : (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  className="header-title-icon"
-                >
-                  <rect x="2" y="4" width="20" height="16" rx="2" ry="2" />
-                  <path d="M2 10h20" />
-                </svg>
-              )}
-              {activeSection === 'my-day' ? 'My Day' : 'Billing & Usage Dashboard'}
-            </h1>
-            <div className="header-actions">
-              <a onClick={handleSettings}>Settings</a>
-              <a onClick={handleLogout}>Logout</a>
-            </div>
-          </div>
-
-          {renderContent()}
-        </div>
-      </div>
     </div>
   );
 };

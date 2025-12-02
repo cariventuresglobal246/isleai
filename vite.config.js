@@ -1,15 +1,34 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+// vite.config.js
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   server: {
+    port: 5174,
     proxy: {
-      '/api': {
-        target: 'http://localhost:3000', // Change to port 3000
+      // Proxy /auth/* requests to Express backend
+      '/auth': {
+        target: 'http://localhost:3000', // Your Express server port
         changeOrigin: true,
-        secure: false
-      }
-    }
-  }
-})
+        secure: false,
+        rewrite: (path) => path, // Keep /auth prefix
+      },
+      // Optional: Proxy API calls
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
+});
+
+
+

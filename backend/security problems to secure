@@ -1,0 +1,107 @@
+Cross‑Site Scripting (XSS) — attacker injects JavaScript into pages viewed by other users.
+Mitigation: output‑encode/escape, use CSP, sanitize inputs.
+
+Cross‑Site Request Forgery (CSRF) — attacker causes a logged‑in user’s browser to perform unwanted actions.
+Mitigation: use anti‑CSRF tokens, SameSite cookies, require re‑auth for critical ops.
+
+Broken Authentication / Session Hijacking — stealing or guessing credentials or session tokens.
+Mitigation: strong password policies, MFA, secure cookie flags, short sessions.
+
+Insecure Direct Object Reference (IDOR / Broken Access Control) — users access resources they shouldn’t by manipulating IDs/paths.
+Mitigation: enforce server‑side authorization checks, use unguessable IDs.
+
+Remote Code Execution (RCE) — attacker causes the server to execute arbitrary code.
+Mitigation: avoid unsafe eval/exec, use least privilege, patch dependencies.
+
+Command Injection — unsanitized input is passed to system shell commands.
+Mitigation: avoid shelling out with user input; use safe APIs or strong validation/escaping.
+
+Server‑Side Request Forgery (SSRF) — attacker makes the server perform HTTP/network requests (often to internal services).
+Mitigation: validate/whitelist URLs, block private IP ranges, network segmentation.
+
+XML External Entity (XXE) / Unsafe XML parsing — XML parsers resolve external entities causing data exfiltration or SSRF.
+Mitigation: disable external entity resolution, use safe parsers.
+
+Insecure Deserialization — deserializing untrusted data leads to object injection or RCE.
+Mitigation: avoid native deserialization of untrusted data, use signatures/whitelists.
+
+Open Redirects — app redirects to attacker‑controlled sites (phishing facilitation).
+Mitigation: disallow open redirects or validate/whitelist redirect targets.
+
+Directory Traversal / Path Traversal — attacker reads files outside allowed dirs (e.g., ../../etc/passwd).
+Mitigation: canonicalize and validate paths, run services with limited FS permissions.
+
+Clickjacking — UI is framed to trick users into clicking hidden controls.
+Mitigation: set X-Frame-Options or CSP frame-ancestors.
+
+Man‑in‑the‑Middle (MITM) — interception of traffic between client and server.
+Mitigation: use TLS everywhere, HSTS, certificate pinning where appropriate.
+
+Supply‑Chain Attacks — compromise of third‑party libraries or CI/CD tooling.
+Mitigation: vet dependencies, pin versions, use SBOMs and reproducible builds.
+
+Brute Force / Credential Stuffing — automated guessing or replaying leaked credentials.
+Mitigation: rate‑limit/login throttling, MFA, detect unusual patterns.
+
+Denial of Service (DoS) / Resource Exhaustion — overwhelm service to make it unavailable.
+Mitigation: rate limiting, autoscaling, WAF, upstream DDoS protection.
+
+Business Logic Flaws — application flows abused in ways developers didn’t intend (e.g., duplicate refunds).
+Mitigation: threat modeling, code reviews, enforce invariants server‑side.
+
+HTTP Header Injection / Response Splitting — attacker injects CRLF to manipulate headers or cache.
+Mitigation: validate header values, avoid reflecting raw user input in headers.
+
+Local File Inclusion (LFI) / Remote File Inclusion (RFI) — include and execute files via unsafe includes.
+Mitigation: disallow dynamic includes, whitelist file names, sanitize inputs.
+
+Privacy / Sensitive Data Exposure — leaking PII, secrets, or keys in logs, responses, or repos.
+Mitigation: encrypt sensitive data, avoid logging secrets, enforce access controls.
+
+If you want, I can:
+
+expand any of these into examples and deeper mitigations,
+
+show demo exploits (safe, explanatory only) and fixes for a chosen one, or
+
+produce a prioritized checklist tailored to your tech stack (Node, PHP, Java, etc.). Which direction?
+
+You said:
+Is this all ?
+ChatGPT said:
+
+Short answer: no — that list covered the common web/app attacks, but it wasn’t exhaustive. There are many more specific, niche, platform‑level, and hybrid attacks — and new ones keep appearing. Below I’ll summarize additional important categories you may see and why they matter.
+
+More attack types (brief)
+
+Social engineering (phishing, vishing, smishing, pretexting) — trick people, not code.
+
+Insider threats — malicious or careless employees leaking or abusing access.
+
+Zero‑day / supply‑chain subtleties — previously unknown bugs or poisoned dependencies (e.g., dependency‑confusion, typosquatting packages).
+
+Side‑channel & microarchitectural attacks — timing, cache (Spectre/Meltdown), Rowhammer, etc.
+
+Cryptographic attacks — padding oracle, weak randomness, downgrade attacks, side‑channel against keys.
+
+Network & infrastructure attacks — DNS hijack, BGP hijack, MITM variants, ARP spoofing.
+
+Cloud‑specific risks — IAM misconfiguration, exposed S3/Blobs, overly permissive roles, metadata service abuse.
+
+Container / orchestration threats — container escape, pod misconfig, exposed kube APIs, cluster privilege escalation.
+
+Mobile app threats — intent spoofing, insecure storage, malicious third‑party SDKs, APK repackaging.
+
+IoT / hardware attacks — insecure firmware, default creds, physical tampering.
+
+API abuse / business logic abuse — scraping, rate‑limit bypasses, replay attacks, abuse of undocumented endpoints.
+
+DNS / cache poisoning — redirecting traffic to attacker infrastructure.
+
+Cryptojacking / covert resource abuse — using your CPU/GPU to mine or run workloads.
+
+Physical attacks — stealing devices, tampering with hardware, social engineering on-site.
+
+Blockchain / smart contract bugs — reentrancy, integer overflow, oracle manipulation.
+
+Automated/AI‑driven attacks — credential stuffing at scale, synthetic‑voice vishing, targeted deepfake scams.

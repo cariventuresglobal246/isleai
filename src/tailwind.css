@@ -1,0 +1,32 @@
+/* ================================
+   Tailwind + Shadcn + Animations
+   Tailwind v4 Compatible File
+   ================================ */
+
+/* Animation plugin used by shadcn/ui */
+@plugin "tailwindcss-animate";
+
+/* Dark mode variant (Tailwind v4 syntax) */
+@custom-variant dark (&:is(.dark *));
+
+/* Tailwind core */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ================================
+   Custom Base Styles (Optional)
+   Add your global styles below
+   ================================ */
+
+/* Example: Smooth fonts */
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Example: Hide scrollbars on chat */
+.chat-messages::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}

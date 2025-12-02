@@ -5,7 +5,7 @@ import isleImage from '../isle4.png';
 
 const supabase = createClient(
   'https://lgurtucciqvwgjaphdqp.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndXJ0dWNjaXF2d2dqYXBoZHFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjk2MzgzNTAsImV4cCI6MjA0NTIxNDM1MH0.I1ajlHp5b4pGL-NQzzvcVdznoiyIvps49Ws5GZFewf8a'
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndXJ0dWNjaXF2d2dqYXBoZHFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjk2MzgzNTAsImV4cCI6MjA0NTIxNDM1MH0.I1ajlHp5b4pGL-NQzzvcVdznoiyIvps49Ws5GZHSXzk'
 );
 
 const Signup1 = () => {
@@ -26,67 +26,81 @@ const Signup1 = () => {
     setSuccess('');
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const { email, username, password, confirmPassword } = formData;
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  const { email, username, password, confirmPassword } = formData;
 
-    if (password !== confirmPassword) {
-      return setError('Passwords do not match.');
+  if (password !== confirmPassword) {
+    setError('Passwords do not match.');
+    return;
+  }
+
+  setIsLoading(true);
+  setError('');
+  setSuccess('');
+
+  try {
+    // 1️⃣ Check if username or email already exists in profiles
+    const { data: existingUser, error: checkError } = await supabase
+      .from('profiles')
+      .select('id')
+      .or(`username.eq.${username},email.eq.${email}`)
+      .maybeSingle();
+
+    if (checkError) throw checkError;
+
+    if (existingUser) {
+      // Determine which field is taken
+      const fieldTaken = existingUser.username === username
+        ? 'username'
+        : 'email';
+      if (fieldTaken === 'username') {
+        setError('This username is already taken. Please choose another one.');
+      } else {
+        setError('This email is already registered. Please log in instead.');
+      }
+      setIsLoading(false);
+      return; // stop signup
     }
 
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { 
-            username, 
-            display_name: username,
-            isFirstTimeUser: true
-          },
-          redirectTo: `${window.location.origin}/login`,
+    // 2️⃣ Attempt to sign up
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { 
+          username,
+          display_name: username,
+          isFirstTimeUser: true
         },
-      });
+        redirectTo: `${window.location.origin}/login`,
+      },
+    });
 
-      if (error) {
-        throw error;
-      }
+    if (error) {
+      setError(error.message || 'Signup failed. Please try again.');
+      return;
+    }
 
+    if (data?.user) {
       setSuccess('Signup successful! Please check your email to confirm, then log in.');
       setTimeout(() => navigate('/login'), 2000);
-    } catch (error) {
-      setError(error.message || 'Signup failed');
-    } finally {
-      setIsLoading(false);
+    } else {
+      setError('Signup failed — no user data returned.');
     }
-  };
 
-  // const handleGoogleLogin = async () => {
-  //   setError('');
-  //   setIsLoading(true);
+  } catch (err) {
+    console.error('Signup error:', err);
+    setError(err.message || 'Signup failed. Please try again.');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
-  //   try {
-  //     const { error } = await supabase.auth.signInWithOAuth({
-  //       provider: 'google',
-  //       options: {
-  //         redirectTo: `${window.location.origin}/login`,
-  //         queryParams: {
-  //           access_type: 'offline',
-  //           prompt: 'consent',
-  //         },
-  //       },
-  //     });
 
-  //     if (error) {
-  //       throw error;
-  //     }
-  //   } catch (error) {
-  //     setError(error.message || 'Google signup failed');
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
+
+
+
 
   return (
     <>
@@ -181,34 +195,6 @@ const Signup1 = () => {
           opacity: 0.6;
           cursor: not-allowed;
         }
-        // .googleButton {
-        //   width: 100%;
-        //   height: 50px;
-        //   background: #4285F4;
-        //   border: none;
-        //   border-radius: 4px;
-        //   color: white;
-        //   font-size: 16px;
-        //   font-weight: 500;
-        //   cursor: pointer;
-        //   transition: background 0.3s ease;
-        //   display: flex;
-        //   align-items: center;
-        //   justify-content: center;
-        //   gap: 10px;
-        //   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        //   padding: 0 15px;
-        //   margin-left: 20px;
-        //   margin-top: 10px;
-        // }
-        // .googleButtonDisabled {
-        //   opacity: 0.6;
-        //   cursor: not-allowed;
-        // }
-        // .googleLogo {
-        //   width: 18px;
-        //   height: 18px;
-        // }
         .loginLink {
           margin-top: 20px;
           color: #a0a0a0;
@@ -285,18 +271,6 @@ const Signup1 = () => {
             margin-bottom: 6px;
             border-radius: 6px;
           }
-          // .googleButton {
-          //   height: 36px;
-          //   font-size: 13px;
-          //   margin-left: 0;
-          //   padding: 0 8px;
-          //   border-radius: 4px;
-          //   margin-top: 6px;
-          // }
-          // .googleLogo {
-          //   width: 14px;
-          //   height: 14px;
-          // }
           .loginLink {
             margin-top: 12px;
             font-size: 13px;
@@ -368,18 +342,6 @@ const Signup1 = () => {
             margin-bottom: 8px;
             border-radius: 8px;
           }
-          // .googleButton {
-          //   height: 40px;
-          //   font-size: 14px;
-          //   margin-left: 0;
-          //   padding: 0 10px;
-          //   border-radius: 4px;
-          //   margin-top: 8px;
-          // }
-          // .googleLogo {
-          //   width: 16px;
-          //   height: 16px;
-          // }
           .loginLink {
             margin-top: 15px;
             font-size: 14px;
@@ -451,18 +413,6 @@ const Signup1 = () => {
             margin-bottom: 8px;
             border-radius: 8px;
           }
-          // .googleButton {
-          //   height: 40px;
-          //   font-size: 14px;
-          //   margin-left: 0;
-          //   padding: 0 10px;
-          //   border-radius: 4px;
-          //   margin-top: 8px;
-          // }
-          // .googleLogo {
-          //   width: 16px;
-          //   height: 16px;
-          // }
           .loginLink {
             margin-top: 15px;
             font-size: 14px;
@@ -531,18 +481,6 @@ const Signup1 = () => {
             margin-bottom: 9px;
             border-radius: 9px;
           }
-          // .googleButton {
-          //   height: 45px;
-          //   font-size: 15px;
-          //   margin-left: 10px;
-          //   padding: 0 12px;
-          //   border-radius: 4px;
-          //   margin-top: 9px;
-          // }
-          // .googleLogo {
-          //   width: 17px;
-          //   height: 17px;
-          // }
           .loginLink {
             margin-top: 18px;
             font-size: 15px;
@@ -613,18 +551,6 @@ const Signup1 = () => {
             margin-bottom: 9px;
             border-radius: 9px;
           }
-          // .googleButton {
-          //   height: 48px;
-          //   font-size: 15px;
-          //   margin-left: 15px;
-          //   padding: 0 14px;
-          //   border-radius: 4px;
-          //   margin-top: 9px;
-          // }
-          // .googleLogo {
-          //   width: 17px;
-          //   height: 17px;
-          // }
           .loginLink {
             margin-top: 18px;
             font-size: 15px;
@@ -712,19 +638,6 @@ const Signup1 = () => {
           >
             {isLoading ? 'Signing up...' : 'Sign Up'}
           </button>
-          {/* <button
-            type="button"
-            className={isLoading ? "googleButton googleButtonDisabled" : "googleButton"}
-            onClick={handleGoogleLogin}
-            disabled={isLoading}
-          >
-            <img
-              src="https://www.google.com/favicon.ico"
-              alt="Google logo"
-              className="googleLogo"
-            />
-            {isLoading ? 'Processing...' : 'Sign up with Google'}
-          </button> */}
           <div className="loginLink">
             Already have an account?
             <Link to="/login" className="loginLinkA">Login</Link>

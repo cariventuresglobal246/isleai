@@ -1,18 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { createClient } from '@supabase/supabase-js';
+import { useAuth } from "./AuthContext";
 import isleImage from '../isle4.png';
-
-const supabase = createClient(
-  'https://lgurtucciqvwgjaphdqp.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndXJ0dWNjaXF2d2dqYXBoZHFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjk2MzgzNTAsImV4cCI6MjA0NTIxNDM1MH0.I1ajlHp5b4pGL-NQzzvcVdznoiyIvps49Ws5GZHSXzk'
-);
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -20,103 +16,33 @@ const Login = () => {
     setError(null);
     setIsLoading(true);
 
+    const sanitizedEmail = username.trim();
+    const sanitizedPassword = password.trim();
+    if (!sanitizedEmail || !sanitizedPassword) {
+      setError('Email and password are required');
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const { data: { session }, error } = await supabase.auth.signInWithPassword({
-        email: username,
-        password,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      if (session?.user) {
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-        if (userError) {
-          throw userError;
-        }
-
-        const isFirstTimeUser = userData?.user?.user_metadata?.isFirstTimeUser ?? false;
-
-        if (isFirstTimeUser) {
-          navigate('/onboarding');
-        } else {
-          navigate('/baje');
-        }
-      } else {
-        throw new Error('No user session found');
+      const success = await login(sanitizedEmail, sanitizedPassword);
+      if (!success) {
+        throw new Error('Invalid email or password');
       }
     } catch (error) {
-      setError(error.message || 'Invalid login credentials');
+      setError(error.message || 'Login failed');
       console.error('Login error:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // const handleGoogleLogin = async () => {
-  //   setError(null);
-  //   setIsLoading(true);
-
-  //   try {
-  //     const { error } = await supabase.auth.signInWithOAuth({
-  //       provider: 'google',
-  //       options: {
-  //         redirectTo: `${window.location.origin}/login`,
-  //       },
-  //     });
-
-  //     if (error) {
-  //       throw error;
-  //     }
-  //   } catch (error) {
-  //     setError(error.message || 'Google login failed');
-  //     console.error('Google login error:', error);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  useEffect(() => {
-    async function checkUserAfterRedirect() {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) {
-        console.error('Session error:', sessionError);
-        return;
-      }
-
-      const url = new URL(window.location.href);
-      const isRecovery = url.hash.includes('type=recovery');
-
-      if (session?.user && !isRecovery) {
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-        if (userError) {
-          console.error('User data error:', userError);
-          return;
-        }
-
-        const isFirstTimeUser = userData?.user?.user_metadata?.isFirstTimeUser ?? false;
-        if (isFirstTimeUser) {
-          navigate('/onboarding');
-        } else {
-          navigate('/baje');
-        }
-      } else if (isRecovery) {
-        navigate('/reset-password');
-      }
-    }
-
-    checkUserAfterRedirect();
-  }, [navigate]);
-
   return (
     <>
       <style jsx>{`
         body {
-
           background: var(--bg-gradient);
-         --bg-gradient: linear-gradient(135deg, #000000, #1E90FF);
-
+          --bg-gradient: linear-gradient(135deg, #000000, #1E90FF);
           display: flex;
           justify-content: center;
           align-items: center;
@@ -204,33 +130,6 @@ const Login = () => {
           opacity: 0.6;
           cursor: not-allowed;
         }
-        // .googleButton {
-        //   width: 100%;
-        //   height: 50px;
-        //   background: #4285F4;
-        //   border: none;
-        //   border-radius: 4px;
-        //   color: white;
-        //   font-size: 16px;
-        //   font-weight: 500;
-        //   cursor: pointer;
-        //   transition: background 0.3s ease;
-        //   display: flex;
-        //   align-items: center;
-        //   justify-content: center;
-        //   gap: 10px;
-        //   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        //   padding: 0 15px;
-        //   margin-left: 20px;
-        // }
-        // .googleButtonDisabled {
-        //   opacity: 0.6;
-        //   cursor: not-allowed;
-        // }
-        // .googleLogo {
-        //   width: 18px;
-        //   height: 18px;
-        // }
         .signupLink {
           margin-top: 20px;
           color: #a0a0a0;
@@ -245,243 +144,201 @@ const Login = () => {
           margin-bottom: 20px;
           font-size: 14px;
         }
-
-      
- /* Mobile Portrait (320px) */
-@media (min-width: 320px) and (max-width: 374px) {
-  body {
-    padding: 8px;
-    align-items: flex-start;
-  }
-  .mainContainer {
-    width: 100%;
-    height: auto;
-    min-height: 60px;
-    border-radius: 6px;
-    padding: 8px;
-    margin: 80px 0 0 0;
-  }
-  .loginHeader {
-    padding: 12px 16px;
-    margin-bottom: 8px;
-  }
-  .logo {
-    font-size: 22px;
-  }
-  .logoContainer {
-    height: 12vh;
-    margin-bottom: -15px;
-  }
-  .logoImage {
-    height: 55%;
-  }
-  .loginForm {
-    width: 95%;
-    margin-top: 8px;
-    margin-right: 10px;
-  }
-  .inputGroup {
-    margin-bottom: 12px;
-    margin-right: 8px;
-  }
-  .inputGroupLabel {
-    font-size: 13px;
-    margin-bottom: 6px;
-  }
-  .inputGroupInput {
-    height: 36px;
-    font-size: 13px;
-    padding: 0 8px;
-    border-radius: 6px;
-  }
-  .loginButton {
-    height: 36px;
-    font-size: 14px;
-    margin-left: 0;
-    margin-bottom: 6px;
-    border-radius: 6px;
-  }
-  // .googleButton {
-  //   height: 36px;
-  //   font-size: 13px;
-  //   margin-left: 0;
-  //   padding: 0 8px;
-  //   border-radius: 4px;
-  // }
-  // .googleLogo {
-  //   width: 14px;
-  //   height: 14px;
-  // }
-  .signupLink {
-    margin-top: 12px;
-    font-size: 13px;
-  }
-  .signupLinkA {
-    margin-left: 3px;
-  }
-  .errorMessage {
-    font-size: 11px;
-    margin-bottom: 12px;
-  }
-}
-
-/* Mobile Portrait (375px) */
-@media (min-width: 375px) and (max-width: 424px) {
-  body {
-    padding: 8px;
-    align-items: flex-start;
-  }
-  .mainContainer {
-    width: 100%;
-    height: auto;
-    min-height: 60px;
-    border-radius: 6px;
-    padding: 10px;
-    margin: 80px 0 0 0;
-  }
-  .loginHeader {
-    padding: 15px 20px;
-    margin-bottom: 10px;
-  }
-  .logo {
-    font-size: 24px;
-  }
-  .logoContainer {
-    height: 15vh;
-    margin-bottom: -20px;
-  }
-  .logoImage {
-    height: 60%;
-  }
-  .loginForm {
-    width: 92%;
-    margin-top: 10px;
-    margin-right: 15px;
-  }
-  .inputGroup {
-    margin-bottom: 15px;
-    margin-right: 10px;
-  }
-  .inputGroupLabel {
-    font-size: 14px;
-    margin-bottom: 8px;
-  }
-  .inputGroupInput {
-    height: 40px;
-    font-size: 14px;
-    padding: 0 10px;
-    border-radius: 8px;
-  }
-  .loginButton {
-    height: 40px;
-    font-size: 16px;
-    margin-left: 0;
-    margin-bottom: 8px;
-    border-radius: 8px;
-  }
-  // .googleButton {
-  //   height: 40px;
-  //   font-size: 14px;
-  //   margin-left: 0;
-  //   padding: 0 10px;
-  //   border-radius: 4px;
-  // }
-  // .googleLogo {
-  //   width: 16px;
-  //   height: 16px;
-  // }
-  .signupLink {
-    margin-top: 15px;
-    font-size: 14px;
-  }
-  .signupLinkA {
-    margin-left: 4px;
-  }
-  .errorMessage {
-    font-size: 12px;
-    margin-bottom: 15px;
-  }
-}
-
-/* Mobile Portrait (425px) */
-@media (min-width: 425px) and (max-width: 479px) {
-  body {
-    padding: 8px;
-    align-items: flex-start;
-  }
-  .mainContainer {
-    width: 100%;
-    height: auto;
-    min-height: 60px;
-    border-radius: 6px;
-    padding: 12px;
-    margin: 80px 0 0 0;
-  }
-  .loginHeader {
-    padding: 15px 20px;
-    margin-bottom: 10px;
-  }
-  .logo {
-    font-size: 24px;
-  }
-  .logoContainer {
-    height: 15vh;
-    margin-bottom: -20px;
-  }
-  .logoImage {
-    height: 60%;
-  }
-  .loginForm {
-    width: 90%;
-    margin-top: 10px;
-    margin-right: 20px;
-  }
-  .inputGroup {
-    margin-bottom: 15px;
-    margin-right: 10px;
-  }
-  .inputGroupLabel {
-    font-size: 14px;
-    margin-bottom: 8px;
-  }
-  .inputGroupInput {
-    height: 40px;
-    font-size: 14px;
-    padding: 0 10px;
-    border-radius: 8px;
-  }
-  .loginButton {
-    height: 40px;
-    font-size: 16px;
-    margin-left: 0;
-    margin-bottom: 8px;
-    border-radius: 8px;
-  }
-  // .googleButton {
-  //   height: 40px;
-  //   font-size: 14px;
-  //   margin-left: 0;
-  //   padding: 0 10px;
-  //   border-radius: 4px;
-  // }
-  // .googleLogo {
-  //   width: 16px;
-  //   height: 16px;
-  // }
-  .signupLink {
-    margin-top: 15px;
-    font-size: 14px;
-  }
-  .signupLinkA {
-    margin-left: 4px;
-  }
-  .errorMessage {
-    font-size: 12px;
-    margin-bottom: 15px;
-  }
-}
-
-        /* Mobile Landscape (481px to 767px) */
+        @media (min-width: 320px) and (max-width: 374px) {
+          body {
+            padding: 8px;
+            align-items: flex-start;
+          }
+          .mainContainer {
+            width: 100%;
+            height: auto;
+            min-height: 60px;
+            border-radius: 6px;
+            padding: 8px;
+            margin: 80px 0 0 0;
+          }
+          .loginHeader {
+            padding: 12px 16px;
+            margin-bottom: 8px;
+          }
+          .logo {
+            font-size: 22px;
+          }
+          .logoContainer {
+            height: 12vh;
+            margin-bottom: -15px;
+          }
+          .logoImage {
+            height: 55%;
+          }
+          .loginForm {
+            width: 95%;
+            margin-top: 8px;
+            margin-right: 10px;
+          }
+          .inputGroup {
+            margin-bottom: 12px;
+            margin-right: 8px;
+          }
+          .inputGroupLabel {
+            font-size: 13px;
+            margin-bottom: 6px;
+          }
+          .inputGroupInput {
+            height: 36px;
+            font-size: 13px;
+            padding: 0 8px;
+            border-radius: 6px;
+          }
+          .loginButton {
+            height: 36px;
+            font-size: 14px;
+            margin-left: 0;
+            margin-bottom: 6px;
+            border-radius: 6px;
+          }
+          .signupLink {
+            margin-top: 12px;
+            font-size: 13px;
+          }
+          .signupLinkA {
+            margin-left: 3px;
+          }
+          .errorMessage {
+            font-size: 11px;
+            margin-bottom: 12px;
+          }
+        }
+        @media (min-width: 375px) and (max-width: 424px) {
+          body {
+            padding: 8px;
+            align-items: flex-start;
+          }
+          .mainContainer {
+            width: 100%;
+            height: auto;
+            min-height: 60px;
+            border-radius: 6px;
+            padding: 10px;
+            margin: 80px 0 0 0;
+          }
+          .loginHeader {
+            padding: 15px 20px;
+            margin-bottom: 10px;
+          }
+          .logo {
+            font-size: 24px;
+          }
+          .logoContainer {
+            height: 15vh;
+            margin-bottom: -20px;
+          }
+          .logoImage {
+            height: 60%;
+          }
+          .loginForm {
+            width: 92%;
+            margin-top: 10px;
+            margin-right: 15px;
+          }
+          .inputGroup {
+            margin-bottom: 15px;
+            margin-right: 10px;
+          }
+          .inputGroupLabel {
+            font-size: 14px;
+            margin-bottom: 8px;
+          }
+          .inputGroupInput {
+            height: 40px;
+            font-size: 14px;
+            padding: 0 10px;
+            border-radius: 8px;
+          }
+          .loginButton {
+            height: 40px;
+            font-size: 16px;
+            margin-left: 0;
+            margin-bottom: 8px;
+            border-radius: 8px;
+          }
+          .signupLink {
+            margin-top: 15px;
+            font-size: 14px;
+          }
+          .signupLinkA {
+            margin-left: 4px;
+          }
+          .errorMessage {
+            font-size: 12px;
+            margin-bottom: 15px;
+          }
+        }
+        @media (min-width: 425px) and (max-width: 479px) {
+          body {
+            padding: 8px;
+            align-items: flex-start;
+          }
+          .mainContainer {
+            width: 100%;
+            height: auto;
+            min-height: 60px;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 80px 0 0 0;
+          }
+          .loginHeader {
+            padding: 15px 20px;
+            margin-bottom: 10px;
+          }
+          .logo {
+            font-size: 24px;
+          }
+          .logoContainer {
+            height: 15vh;
+            margin-bottom: -20px;
+          }
+          .logoImage {
+            height: 60%;
+          }
+          .loginForm {
+            width: 90%;
+            margin-top: 10px;
+            margin-right: 20px;
+          }
+          .inputGroup {
+            margin-bottom: 15px;
+            margin-right: 10px;
+          }
+          .inputGroupLabel {
+            font-size: 14px;
+            margin-bottom: 8px;
+          }
+          .inputGroupInput {
+            height: 40px;
+            font-size: 14px;
+            padding: 0 10px;
+            border-radius: 8px;
+          }
+          .loginButton {
+            height: 40px;
+            font-size: 16px;
+            margin-left: 0;
+            margin-bottom: 8px;
+            border-radius: 8px;
+          }
+          .signupLink {
+            margin-top: 15px;
+            font-size: 14px;
+          }
+          .signupLinkA {
+            margin-left: 4px;
+          }
+          .errorMessage {
+            font-size: 12px;
+            margin-bottom: 15px;
+          }
+        }
         @media (min-width: 481px) and (max-width: 767px) {
           body {
             padding: 12px;
@@ -532,17 +389,6 @@ const Login = () => {
             margin-bottom: 9px;
             border-radius: 9px;
           }
-          // .googleButton {
-          //   height: 45px;
-          //   font-size: 15px;
-          //   margin-left: 10px;
-          //   padding: 0 12px;
-          //   border-radius: 4px;
-          // }
-          // .googleLogo {
-          //   width: 17px;
-          //   height: 17px;
-          // }
           .signupLink {
             margin-top: 18px;
             font-size: 15px;
@@ -555,20 +401,17 @@ const Login = () => {
             margin-bottom: 18px;
           }
         }
-
-        /* Tablet Portrait and Landscape (768px to 1024px) */
         @media (min-width: 768px) and (max-width: 1024px) {
           body {
             padding: 16px;
           }
           .mainContainer {
-          display: flex;
-          align-items: center;
+            display: flex;
+            align-items: center;
             width: 170%;
             height: 600px;
             border-radius: 7px;
             padding: 20px;
-           
             margin-left: -90px;
           }
           .loginHeader {
@@ -609,17 +452,6 @@ const Login = () => {
             margin-bottom: 9px;
             border-radius: 9px;
           }
-          // .googleButton {
-          //   height: 48px;
-          //   font-size: 15px;
-          //   margin-left: 15px;
-          //   padding: 0 14px;
-          //   border-radius: 4px;
-          // }
-          // .googleLogo {
-          //   width: 17px;
-          //   height: 17px;
-          // }
           .signupLink {
             margin-top: 18px;
             font-size: 15px;
@@ -632,9 +464,6 @@ const Login = () => {
             margin-bottom: 18px;
           }
         }
-
-
-        /* Laptop/Desktop (1025px to 1280px) */
         @media (min-width: 1025px) and (max-width: 1280px) {
           body {
             padding: 20px;
@@ -683,17 +512,6 @@ const Login = () => {
             margin-bottom: 10px;
             border-radius: 10px;
           }
-          // .googleButton {
-          //   height: 50px;
-          //   font-size: 16px;
-          //   margin-left: 20px;
-          //   padding: 0 15px;
-          //   border-radius: 4px;
-          // }
-          // .googleLogo {
-          //   width: 18px;
-          //   height: 18px;
-          // }
           .signupLink {
             margin-top: 20px;
             font-size: 16px;
@@ -706,8 +524,6 @@ const Login = () => {
             margin-bottom: 20px;
           }
         }
-
-        /* Desktop (1281px+) */
         @media (min-width: 1281px) {
           body {
             padding: 24px;
@@ -756,17 +572,6 @@ const Login = () => {
             margin-bottom: 10px;
             border-radius: 10px;
           }
-          // .googleButton {
-          //   height: 50px;
-          //   font-size: 16px;
-          //   margin-left: 20px;
-          //   padding: 0 15px;
-          //   border-radius: 4px;
-          // }
-          // .googleLogo {
-          //   width: 18px;
-          //   height: 18px;
-          // }
           .signupLink {
             margin-top: 20px;
             font-size: 16px;
@@ -823,19 +628,6 @@ const Login = () => {
           >
             {isLoading ? 'Logging in...' : 'Login'}
           </button>
-          {/* <button
-            type="button"
-            className={isLoading ? "googleButton googleButtonDisabled" : "googleButton"}
-            onClick={handleGoogleLogin}
-            disabled={isLoading}
-          >
-            <img
-              src="https://www.google.com/favicon.ico"
-              alt="Google logo"
-              className="googleLogo"
-            />
-            {isLoading ? 'Processing...' : 'Sign in with Google'}
-          </button> */}
           <div className="signupLink">
             Don’t have an account?
             <Link to="/signup" className="signupLinkA">Sign Up</Link>
