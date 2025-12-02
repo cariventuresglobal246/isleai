@@ -26,81 +26,83 @@ const Signup1 = () => {
     setSuccess('');
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  const { email, username, password, confirmPassword } = formData;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // --- FIX START: Sanitize inputs immediately ---
+    const sanitizedEmail = formData.email.trim();
+    const sanitizedUsername = formData.username.trim();
+    const { password, confirmPassword } = formData;
+    // --- FIX END ---
 
-  if (password !== confirmPassword) {
-    setError('Passwords do not match.');
-    return;
-  }
-
-  setIsLoading(true);
-  setError('');
-  setSuccess('');
-
-  try {
-    // 1️⃣ Check if username or email already exists in profiles
-    const { data: existingUser, error: checkError } = await supabase
-      .from('profiles')
-      .select('id')
-      .or(`username.eq.${username},email.eq.${email}`)
-      .maybeSingle();
-
-    if (checkError) throw checkError;
-
-    if (existingUser) {
-      // Determine which field is taken
-      const fieldTaken = existingUser.username === username
-        ? 'username'
-        : 'email';
-      if (fieldTaken === 'username') {
-        setError('This username is already taken. Please choose another one.');
-      } else {
-        setError('This email is already registered. Please log in instead.');
-      }
-      setIsLoading(false);
-      return; // stop signup
-    }
-
-    // 2️⃣ Attempt to sign up
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { 
-          username,
-          display_name: username,
-          isFirstTimeUser: true
-        },
-        redirectTo: `${window.location.origin}/login`,
-      },
-    });
-
-    if (error) {
-      setError(error.message || 'Signup failed. Please try again.');
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
       return;
     }
 
-    if (data?.user) {
-      setSuccess('Signup successful! Please check your email to confirm, then log in.');
-      setTimeout(() => navigate('/login'), 2000);
-    } else {
-      setError('Signup failed — no user data returned.');
+    setIsLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      // 1️⃣ Check if username or email already exists in profiles
+      // Using sanitized variables here
+      const { data: existingUser, error: checkError } = await supabase
+        .from('profiles')
+        .select('id')
+        .or(`username.eq.${sanitizedUsername},email.eq.${sanitizedEmail}`)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+
+      if (existingUser) {
+        // Determine which field is taken
+        const fieldTaken = existingUser.username === sanitizedUsername
+          ? 'username'
+          : 'email';
+        if (fieldTaken === 'username') {
+          setError('This username is already taken. Please choose another one.');
+        } else {
+          setError('This email is already registered. Please log in instead.');
+        }
+        setIsLoading(false);
+        return; // stop signup
+      }
+
+      // 2️⃣ Attempt to sign up
+      // Using sanitized variables here
+      const { data, error } = await supabase.auth.signUp({
+        email: sanitizedEmail,
+        password,
+        options: {
+          data: { 
+            username: sanitizedUsername,
+            display_name: sanitizedUsername,
+            isFirstTimeUser: true
+          },
+          redirectTo: `${window.location.origin}/login`,
+        },
+      });
+
+      if (error) {
+        setError(error.message || 'Signup failed. Please try again.');
+        return;
+      }
+
+      if (data?.user) {
+        setSuccess('Signup successful! Please check your email to confirm, then log in.');
+        setTimeout(() => navigate('/login'), 2000);
+      } else {
+        setError('Signup failed — no user data returned.');
+      }
+
+    } catch (err) {
+      console.error('Signup error:', err);
+      setError(err.message || 'Signup failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-
-  } catch (err) {
-    console.error('Signup error:', err);
-    setError(err.message || 'Signup failed. Please try again.');
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-
-
-
-
+  };
 
   return (
     <>
