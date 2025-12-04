@@ -1708,6 +1708,7 @@ function Baje() {
           <button
             className="agent-button"
             type="button"
+            onClick={() => setIsAgentMenuOpen((prev) => !prev)} // Added toggle here for mobile touch support
             aria-haspopup="menu"
             aria-expanded={isAgentMenuOpen}
             title={`Agent: ${activeAgent}`}
@@ -1719,6 +1720,16 @@ function Baje() {
             className={`agent-menu ${isAgentMenuOpen ? 'open' : ''}`}
             role="menu"
             aria-label="Choose agent"
+            style={{
+              position: 'absolute',
+              bottom: '100%',
+              right: '1%', // Anchor to the left of the agent button
+              marginRight: '5px', // Spacing from the agent button
+              marginBottom: '20px', // Lift it up a bit more
+              zIndex: 2000,
+              left: 'auto', // Ensure it doesn't stretch
+              minWidth: 'max-content' // formatting
+            }}
           >
             {['Main', 'Tourism'].map((agent) => (
               <button
