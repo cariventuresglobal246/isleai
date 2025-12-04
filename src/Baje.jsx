@@ -5,1591 +5,857 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import sanitizeHtml from 'sanitize-html';
 import './Baje.css';
 import './tailwind.css';
+import AITextPressure from './AITextPressure';
 import ChatBarTourism from './ChatBarTourism';
-import VariableProximity from '../components/VariableProximity';
+import VariableProximity from './components/VariableProximity';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUmbrellaBeach, faWaveSquare } from '@fortawesome/free-solid-svg-icons';
-
-const BARBADOS_HOTELS = [
-  {
-    id: 'o2',
-    name: 'O2 Beach Club & Spa',
-    priceRange: '$400–$800',
-    rating: '4.8',
-  },
-  {
-    id: 'sandals',
-    name: 'Sandals Royal Barbados',
-    priceRange: '$500–$900',
-    rating: '4.7',
-  },
-  {
-    id: 'accra',
-    name: 'Accra Beach Hotel & Spa',
-    priceRange: '$250–$450',
-    rating: '4.3',
-  },
-  {
-    id: 'airbnb',
-    name: 'South Coast Airbnb Apartment',
-    priceRange: '$120–$250',
-    rating: '4.6',
-  },
-];
+import { faUmbrellaBeach, faBell, faBars, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,
 });
 
+const BARBADOS_HOTELS = [
+  {
+    id: 'hotel-1',
+    name: 'O2 Beach Club & Spa',
+    type: 'Resort',
+    location: 'Maxwell Coast Road, Christ Church, Barbados',
+    latitude: 13.0686,
+    longitude: -59.5696,
+    rating: 4.8,
+    priceRange: '$$$',
+    vibe: ['luxury', 'all-inclusive', 'spa', 'beachfront'],
+  },
+  {
+    id: 'hotel-2',
+    name: 'Sandals Royal Barbados',
+    type: 'Resort',
+    location: 'St. Lawrence Gap, Christ Church, Barbados',
+    latitude: 13.0682,
+    longitude: -59.564,
+    rating: 4.7,
+    priceRange: '$$$$',
+    vibe: ['romantic', 'all-inclusive', 'couples-only'],
+  },
+  {
+    id: 'hotel-3',
+    name: 'Accra Beach Hotel & Spa',
+    type: 'Hotel',
+    location: 'Rockley, Christ Church, Barbados',
+    latitude: 13.0786,
+    longitude: -59.5926,
+    rating: 4.3,
+    priceRange: '$$-$$$',
+    vibe: ['family-friendly', 'beachfront', 'central'],
+  },
+  {
+    id: 'hotel-4',
+    name: 'Oceanview Bayfront Airbnb',
+    type: 'Airbnb',
+    location: 'Hastings Boardwalk Area, Christ Church, Barbados',
+    latitude: 13.087,
+    longitude: -59.603,
+    rating: 4.6,
+    priceRange: '$$',
+    vibe: ['budget', 'oceanview', 'local-experience'],
+  },
+];
+
+const INTEREST_PRESETS = {
+  Surfing: ['surfing', 'waves', 'action sports', 'ocean'],
+  Partying: ['nightlife', 'bars', 'clubs', 'events'],
+  Relaxation: ['spa', 'quiet', 'beach lounging', 'sunset'],
+  Culture: ['museums', 'heritage', 'historic sites', 'food tours'],
+};
+
+const TIP_INTERVAL = 1800000;
+
 function Baje() {
   const location = useLocation();
+  const navigate = useNavigate();
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
   const fetchingProfileRef = useRef(false);
   const fetchingFactRef = useRef(false);
   const fetchingTipRef = useRef(false);
   const messagesContainerRef = useRef(null);
-  const tourismBarRef = useRef(null);
   const tourismButtonRef = useRef(null);
-
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isNavOpen, setIsNavOpen] = useState(false);
-  const [avatarImage, setAvatarImage] = useState(null);
-
-  const [isAgentMenuOpen, setIsAgentMenuOpen] = useState(false);
+  const [sessionId, setSessionId] = useState(uuidv4());
+  const [userId, setUserId] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [conversationStarters, setConversationStarters] = useState([]);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [attachedFiles, setAttachedFiles] = useState([]);
+  const [showTourismBar, setShowTourismBar] = useState(false);
+  const [isTourismBarOpen, setIsTourismBarOpen] = useState(false);
   const [activeAgent, setActiveAgent] = useState('Main');
   const [agentIcon, setAgentIcon] = useState('🤖');
-
-  const [isCountryMenuOpen, setIsCountryMenuOpen] = useState(false);
-
-  const [isFactsCardOpen, setIsFactsCardOpen] = useState(false);
-  const [isTipCardOpen, setIsTipCardOpen] = useState(false);
-  const [fact, setFact] = useState({ questions: '', answers: '' });
-  const [currentTip, setCurrentTip] = useState({ id: null, tip_text: '' });
-
-  const [notificationCount, setNotificationCount] = useState(0);
-  const [showNotificationBadge, setShowNotificationBadge] = useState(false);
-  const [usageStartTime, setUsageStartTime] = useState(null);
-  const [selectedCountry, setSelectedCountry] = useState({
-    name: 'Barbados',
-    nickname: 'Bajan',
-    flagUrl:
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Flag_of_Barbados.svg/1200px-Flag_of_Barbados.svg.png',
-  });
-  const [chatSessionId, setChatSessionId] = useState(null);
-  const [csrfToken, setCsrfToken] = useState(null);
-  const [userId, setUserId] = useState(null);
-  const navigate = useNavigate();
-
-  const TIP_INTERVAL = 1800000;
-
-  const [isTourismBarOpen, setIsTourismBarOpen] = useState(false);
-
-  const [isOnboardingActive, setIsOnboardingActive] = useState(false);
-  const [onboardingStep, setOnboardingStep] = useState(0);
-  const [onboardingData, setOnboardingData] = useState({
-    budget: '',
-    startDate: '',
-    endDate: '',
-    wantReminder: false,
-    stayOption: '',
-    interests: [],
-    wantBucket: false,
-  });
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
-
+  const [selectedCountry, setSelectedCountry] = useState('Barbados');
+  const [tripBudget, setTripBudget] = useState('');
+  const [tripDates, setTripDates] = useState({ start: '', end: '' });
+  const [tripDuration, setTripDuration] = useState('');
+  const [tripStay, setTripStay] = useState('');
+  const [tripInterests, setTripInterests] = useState([]);
+  const [wantBucketList, setWantBucketList] = useState(false);
+  const [bucketListGenerated, setBucketListGenerated] = useState(false);
+  const [tripSuggestions, setTripSuggestions] = useState([]);
+  const [lastTipTime, setLastTipTime] = useState(null);
   const [proximityToggles, setProximityToggles] = useState({});
+  const [showNavCard, setShowNavCard] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [showNotificationPanel, setShowNotificationPanel] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [hasNewNotifications, setHasNewNotifications] = useState(false);
+  const [tourismMode, setTourismMode] = useState(false);
+  const [proximityEnabled, setProximityEnabled] = useState(false);
+  const [tourismProfile, setTourismProfile] = useState(null);
+  const [encouragementReminder, setEncouragementReminder] = useState(null);
+  const [isAgentMenuOpen, setIsAgentMenuOpen] = useState(false);
+  const [locationFlag, setLocationFlag] = useState({
+    country: 'Barbados',
+    code: 'BB',
+    emoji: '🇧🇧',
+  });
 
-  const MAX_FILE_SIZE = 10 * 1024 * 1024;
-  const TIP_TIMER_KEY = 'tipTimerStart';
-
-  useEffect(() => {
-    const reqId = api.interceptors.request.use((cfg) => {
-      if (csrfToken) cfg.headers['X-CSRF-Token'] = csrfToken;
-      return cfg;
-    });
-    const resId = api.interceptors.response.use(
-      (r) => r,
-      (err) => {
-        if (err?.response?.status === 401) {
-          navigate('/login', { replace: true });
-        }
-        return Promise.reject(err);
-      }
-    );
-    return () => {
-      api.interceptors.request.eject(reqId);
-      api.interceptors.response.eject(resId);
-    };
-  }, [csrfToken, navigate]);
+  const isTourismAgentActive = activeAgent === 'Tourism';
 
   useEffect(() => {
-    const fetchCsrfToken = async () => {
+    const storedUser = localStorage.getItem('isAuthenticated');
+    const storedUserId = localStorage.getItem('userId');
+    if (storedUser === 'true' && storedUserId) {
+      setIsAuthenticated(true);
+      setUserId(storedUserId);
+    }
+
+    const fetchInitialData = async () => {
       try {
-        const res = await api.get('/api/csrf-token');
-        setCsrfToken(res.data.csrfToken);
-      } catch (err) {
-        console.error('Error fetching CSRF token', err);
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: uuidv4(),
-            role: 'assistant',
-            content: 'Sorry, unable to initialize (CSRF). Please refresh the page.',
-            created_at: new Date().toISOString(),
-          },
-        ]);
+        const startersResponse = await api.get('/api/chat/starters');
+        setConversationStarters(startersResponse.data || []);
+      } catch (error) {
+        console.error('Error fetching conversation starters', error);
       }
     };
-    fetchCsrfToken();
+
+    fetchInitialData();
   }, []);
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!csrfToken || fetchingProfileRef.current) return;
-      fetchingProfileRef.current = true;
+    const key = isTourismAgentActive ? 'tourismMessages' : 'mainMessages';
+    const storedMessages = localStorage.getItem(`${key}_${userId || 'guest'}`);
+    if (storedMessages) {
       try {
-        const res = await api.get('/api/profile');
-        setUserId(res.data.id);
-        setAvatarImage(res.data.avatarUrl || null);
+        setMessages(JSON.parse(storedMessages));
       } catch (err) {
-        if (err.response?.status === 401) navigate('/login', { replace: true });
-      } finally {
-        fetchingProfileRef.current = false;
+        console.error('Failed to parse stored messages', err);
       }
-    };
-    if (csrfToken) fetchUserProfile();
-  }, [csrfToken, navigate]);
-
-  useEffect(() => {
-    const fetchOnboardingStatus = async () => {
-      if (!csrfToken || !userId || !selectedCountry.name) return;
-
-      try {
-        const res = await api.get('/api/tourism-onboarding/status', {
-          params: { country: selectedCountry.name },
-        });
-
-        if (res.data.hasCompletedOnboarding) {
-          setHasCompletedOnboarding(true);
-        }
-
-        if (res.data.onboarding) {
-          const dbData = res.data.onboarding;
-          setOnboardingData({
-            budget: dbData.budget || '',
-            startDate: dbData.start_date || '',
-            endDate: dbData.end_date || '',
-            wantReminder: !!dbData.want_reminder,
-            stayOption: dbData.stay_option || '',
-            interests: Array.isArray(dbData.interests) ? dbData.interests : [],
-            wantBucket: !!dbData.want_bucket_list,
-          });
-        }
-      } catch (err) {
-        console.error('Error fetching onboarding status:', err);
-      }
-    };
-
-    fetchOnboardingStatus();
-  }, [csrfToken, userId, selectedCountry.name]);
-
-  useEffect(() => {
-    if (location.state?.restoredChat) {
-      const { id, messages } = location.state.restoredChat;
-      setChatSessionId(id);
-      setMessages(messages);
     } else {
-      const newSessionId = uuidv4();
-      setChatSessionId(newSessionId);
-      setMessages([
-        {
-          id: uuidv4(),
-          role: 'assistant',
-          content: `Welcome to ${selectedCountry.name}! I'm your ${selectedCountry.nickname} helper! Ask me about beaches, food, history, festivals!`,
-          created_at: new Date().toISOString(),
-          animated: false,
-          isWelcome: true,
-        },
-      ]);
-      saveChat(newSessionId, []);
+      setMessages([]);
     }
-    setUsageStartTime(Date.now());
-  }, [selectedCountry, location.state]);
+  }, [isTourismAgentActive, userId]);
 
   useEffect(() => {
-    const fetchNotificationCount = async () => {
-      if (!csrfToken || !userId) return;
-      try {
-        const res = await api.get('/api/notifications');
-        const count = Array.isArray(res.data) ? res.data.length : 0;
-        setNotificationCount((prev) => Math.max(prev, count));
+    const key = isTourismAgentActive ? 'tourismMessages' : 'mainMessages';
+    try {
+      localStorage.setItem(`${key}_${userId || 'guest'}`, JSON.stringify(messages));
+    } catch (err) {
+      console.error('Failed to store messages', err);
+    }
+  }, [messages, isTourismAgentActive, userId]);
 
-        const cached = Number(localStorage.getItem('notificationsCount') || '0');
-        if (count > cached) {
-          localStorage.setItem('notificationsCount', String(count));
-          window.dispatchEvent(new Event('notifications:updated'));
-        }
-        const lastSeen = Number(localStorage.getItem('lastSeenNotificationCount') || 0);
-        setShowNotificationBadge(count > lastSeen);
-      } catch (err) {
-        console.error('Error fetching notifications', err?.response?.data || err.message);
+  useEffect(() => {
+    if (tourismMode && !fetchingProfileRef.current) {
+      fetchTourismProfile();
+    }
+  }, [tourismMode]);
+
+  useEffect(() => {
+    if (!tourismMode) return;
+    if (!lastTipTime) {
+      setLastTipTime(Date.now());
+      return;
+    }
+    const now = Date.now();
+    if (now - lastTipTime >= TIP_INTERVAL && !fetchingTipRef.current) {
+      fetchPeriodicTip();
+      setLastTipTime(now);
+    }
+  }, [tourismMode, lastTipTime]);
+
+  useEffect(() => {
+    const navCard = document.querySelector('.nav-card');
+    if (navCard) {
+      if (showNavCard) {
+        navCard.classList.add('nav-card-open');
+      } else {
+        navCard.classList.remove('nav-card-open');
       }
-    };
-    fetchNotificationCount();
-  }, [csrfToken, userId]);
+    }
+  }, [showNavCard]);
 
   useEffect(() => {
-    const syncFromStorage = () => {
-      const count = Number(localStorage.getItem('notificationsCount') || '0');
-      const lastSeen = Number(localStorage.getItem('lastSeenNotificationCount') || '0');
-      setNotificationCount((prev) => Math.max(prev, count));
-      setShowNotificationBadge(count > lastSeen);
+    if (!showNotificationPanel) return;
+    setHasNewNotifications(false);
+  }, [showNotificationPanel]);
+
+  useEffect(() => {
+    if (!messagesContainerRef.current) return;
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const atBottom = scrollHeight - scrollTop - clientHeight < 50;
+      setShowScrollToBottom(!atBottom);
     };
-    syncFromStorage();
-    const onFocus = () => syncFromStorage();
-    const onUpdated = () => syncFromStorage();
-    window.addEventListener('notifications:updated', onUpdated);
-    window.addEventListener('focus', onFocus);
-    return () => {
-      window.removeEventListener('notifications:updated', onUpdated);
-      window.removeEventListener('focus', onFocus);
-    };
+    const container = messagesContainerRef.current;
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
-    const sync = async () => {
-      const cached = Number(localStorage.getItem('notificationsCount') || '0');
-      if (cached > 0) {
-        setNotificationCount((prev) => Math.max(prev, cached));
-      } else if (csrfToken && userId) {
-        try {
-          const res = await api.get('/api/notifications');
-          const count = Array.isArray(res.data) ? res.data.length : 0;
-          setNotificationCount((prev) => Math.max(prev, count));
-          localStorage.setItem('notificationsCount', String(count));
-          const lastSeen = Number(
-            localStorage.getItem('lastSeenNotificationCount') || '0'
-          );
-          setShowNotificationBadge(count > lastSeen);
-        } catch {}
-      }
-    };
-    sync();
+    if (!messagesEndRef.current) return;
+    messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messages, isTourismBarOpen]);
 
-    const onStorage = (e) => {
-      if (e.key === 'notificationsCount') {
-        const v = Number(e.newValue || '0');
-        setNotificationCount((prev) => Math.max(prev, v));
-      }
-    };
-    const onVisibility = () => {
-      if (!document.hidden) sync();
-    };
-    window.addEventListener('storage', onStorage);
-    document.addEventListener('visibilitychange', onVisibility);
-    return () => {
-      window.removeEventListener('storage', onStorage);
-      document.removeEventListener('visibilitychange', onVisibility);
-    };
-  }, [csrfToken, userId]);
-
-  useEffect(() => {
-    if (messages.some((m) => m.role === 'user')) {
-      saveChat(chatSessionId, messages);
+  const fetchTourismProfile = async () => {
+    if (fetchingProfileRef.current) return;
+    fetchingProfileRef.current = true;
+    try {
+      const response = await api.get('/api/tourism/profile', {
+        params: { userId: userId || 'guest', country: selectedCountry },
+      });
+      setTourismProfile(response.data);
+    } catch (error) {
+      console.error('Error fetching tourism profile', error);
+    } finally {
+      fetchingProfileRef.current = false;
     }
-  }, [messages, chatSessionId]);
+  };
 
-  useEffect(() => {
-    const initializeTimer = (key, interval, callback) => {
-      const startTime = localStorage.getItem(key);
-      const now = Date.now();
-      let delay;
-      if (startTime) {
-        const elapsed = now - parseInt(startTime, 10);
-        const timeSinceLast = elapsed % interval;
-        delay = timeSinceLast === 0 ? interval : interval - timeSinceLast;
-      } else {
-        localStorage.setItem(key, now.toString());
-        delay = interval;
-      }
-      const timer = setTimeout(() => {
-        callback();
-        const intervalId = setInterval(callback, interval);
-        return () => clearInterval(intervalId);
-      }, delay);
-      return () => clearTimeout(timer);
+  const fetchPeriodicTip = async () => {
+    if (fetchingTipRef.current) return;
+    fetchingTipRef.current = true;
+    try {
+      const response = await api.get('/api/tourism/tip', {
+        params: { userId: userId || 'guest', country: selectedCountry },
+      });
+      const tipMessage = {
+        id: uuidv4(),
+        sender: 'assistant',
+        text: response.data.tip || 'Here is a quick tourism tip for you.',
+        createdAt: new Date().toISOString(),
+        isTip: true,
+        agent: 'Tourism',
+      };
+      setMessages((prev) => [...prev, tipMessage]);
+    } catch (error) {
+      console.error('Error fetching periodic tip', error);
+    } finally {
+      fetchingTipRef.current = false;
+    }
+  };
+
+  const sanitizeContent = (html) => {
+    return sanitizeHtml(html, {
+      allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'iframe']),
+      allowedAttributes: {
+        a: ['href', 'name', 'target', 'rel'],
+        img: ['src', 'alt', 'width', 'height'],
+        iframe: ['src', 'width', 'height', 'frameborder', 'allow', 'allowfullscreen'],
+      },
+      allowedSchemes: ['http', 'https', 'mailto'],
+    });
+  };
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    setAttachedFiles(files);
+  };
+
+  const buildPayload = () => {
+    const context = {
+      sessionId,
+      userId: userId || 'guest',
+      location: locationFlag,
+      tourism: tourismMode,
     };
-
-    const fetchTip = async () => {
-      if (fetchingTipRef.current || !csrfToken) return;
-      fetchingTipRef.current = true;
-      try {
-        if (!isFactsCardOpen && !isTipCardOpen) {
-          const res = await api.get('/api/tips', {
-            params: { country: selectedCountry.name },
-          });
-          setCurrentTip(
-            res.data || { id: uuidv4(), tip_text: 'Visit Oistins Fish Fry on Friday nights!' }
-          );
-          setIsTipCardOpen(true);
-          setIsFactsCardOpen(false);
-        }
-      } catch {
-        setCurrentTip({
-          id: uuidv4(),
-          tip_text: 'Visit Oistins Fish Fry on Friday nights!',
-        });
-        setIsTipCardOpen(true);
-        setIsFactsCardOpen(false);
-      } finally {
-        fetchingTipRef.current = false;
-      }
-    };
-
-    if (!isFactsCardOpen && !isTipCardOpen && csrfToken) {
-      const tipCleanup = initializeTimer(TIP_TIMER_KEY, TIP_INTERVAL, fetchTip);
-      return () => {
-        tipCleanup();
+    if (tourismMode) {
+      context.tourismProfile = tourismProfile;
+      context.trip = {
+        country: selectedCountry,
+        budget: tripBudget,
+        dates: tripDates,
+        duration: tripDuration,
+        stay: tripStay,
+        interests: tripInterests,
+        wantBucketList,
       };
     }
-  }, [csrfToken, selectedCountry.name, isFactsCardOpen, isTipCardOpen]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  useEffect(() => {
-    return () => {
-      if (chatSessionId && usageStartTime) {
-        const durationSeconds = Math.round((Date.now() - usageStartTime) / 1000);
-        saveUsageTime(chatSessionId, durationSeconds);
-      }
-    };
-  }, [chatSessionId, usageStartTime]);
-
-  useEffect(() => {
-    const a = localStorage.getItem('activeAgent');
-    const i = localStorage.getItem('agentIcon');
-    if (a) setActiveAgent(a);
-    if (i) setAgentIcon(i);
-  }, []);
-  useEffect(() => {
-    localStorage.setItem('activeAgent', activeAgent);
-    localStorage.setItem('agentIcon', agentIcon);
-  }, [activeAgent, agentIcon]);
-
-  useEffect(() => {
-    if (!isTourismBarOpen) return;
-
-    const handleClickOutside = (e) => {
-      const barEl = tourismBarRef.current;
-      const btnEl = tourismButtonRef.current;
-
-      if (barEl && barEl.contains(e.target)) return;
-      if (btnEl && btnEl.contains(e.target)) return;
-
-      setIsTourismBarOpen(false);
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('touchstart', handleClickOutside);
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
-    };
-  }, [isTourismBarOpen]);
-
-  const saveChat = async (sessionId, chatMessages) => {
-    try {
-      if (!csrfToken || !userId) return;
-      const userMessage = [...chatMessages].reverse().find((m) => m.role === 'user');
-      const snippet = userMessage
-        ? userMessage.content.slice(0, 100) + '...'
-        : 'No user messages';
-      await api.post('/api/chat/save', {
-        sessionId,
-        messages: chatMessages,
-        title: `${selectedCountry.name} ${activeAgent} Chat`,
-        snippet,
-        userId,
-      });
-    } catch (err) {
-      console.error('Error saving chat', err?.response?.data || err.message);
-    }
+    return context;
   };
 
-  const saveUsageTime = async (sessionId, durationSeconds) => {
-    try {
-      if (!csrfToken || !userId) return;
-      await api.post('/api/usage', { sessionId, durationSeconds, userId });
-    } catch (err) {
-      console.error('Error saving usage time', err?.response?.data || err.message);
+  const sendMessage = async (overrideText) => {
+    if (isLoading) return;
+    const content = overrideText || inputValue.trim();
+    if (!content) return;
+    if (!isAuthenticated) {
+      setShowLoginPrompt(true);
+      return;
     }
-  };
-
-  const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return;
-
-    const userMessage = {
+    const newMessage = {
       id: uuidv4(),
-      role: 'user',
-      content: `${activeAgent}: ${inputValue}`,
-      created_at: new Date().toISOString(),
+      sender: 'user',
+      text: content,
+      createdAt: new Date().toISOString(),
     };
-
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prev) => [...prev, newMessage]);
     setInputValue('');
     setIsLoading(true);
-
+    const formData = new FormData();
+    formData.append('message', content);
+    formData.append('sessionId', sessionId);
+    formData.append('userId', userId || 'guest');
+    formData.append('agent', activeAgent);
+    formData.append('context', JSON.stringify(buildPayload()));
+    attachedFiles.forEach((file) => {
+      formData.append('files', file);
+    });
     try {
-      const res = await api.post('/ask', {
-        prompt: `${selectedCountry.name} ${activeAgent}: ${userMessage.content.replace(
-          /^Main:\s*/,
-          ''
-        )}`,
-        userId,
-        countryName: selectedCountry.name,
+      const response = await api.post('/api/chat/send', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
-
       const assistantMessage = {
         id: uuidv4(),
-        role: 'assistant',
+        sender: 'assistant',
+        text: response.data.reply,
+        createdAt: new Date().toISOString(),
         agent: activeAgent,
-        type: res.data.responseType || 'text',
-        title: res.data.title,
-        mapEmbedUrl: res.data.mapEmbedUrl,
-        content: res.data.response || res.data.text || 'No response',
-        created_at: new Date().toISOString(),
       };
-
       setMessages((prev) => [...prev, assistantMessage]);
-    } catch (err) {
-      console.error('AI Error:', err);
-
-      let errorMsg = 'Sorry mon Try again later';
-      if (err?.response?.data?.detail) {
-        errorMsg = `AI error: ${err.response.data.detail}`;
-      } else if (err?.response?.data?.error) {
-        errorMsg = err.response.data.error;
-      } else if (err?.message) {
-        errorMsg = `Network: ${err.message}`;
+      if (response.data.notifications && response.data.notifications.length) {
+        setNotifications((prev) => [...response.data.notifications, ...prev]);
+        setNotificationCount((prev) => prev + response.data.notifications.length);
+        setHasNewNotifications(true);
       }
+    } catch (error) {
+      console.error('Error sending message', error);
+      const errorMessage = {
+        id: uuidv4(),
+        sender: 'assistant',
+        text: 'Sorry, something went wrong while sending your message. Please try again.',
+        createdAt: new Date().toISOString(),
+        agent: 'System',
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+      setAttachedFiles([]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: uuidv4(),
-          role: 'assistant',
-          content: errorMsg,
-          created_at: new Date().toISOString(),
-        },
-      ]);
+  const handleKeyPress = (event) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      sendMessage();
+    }
+  };
+
+  const handleStarterClick = (starter) => {
+    sendMessage(starter);
+  };
+
+  const handleScrollToBottom = () => {
+    if (!messagesContainerRef.current) return;
+    messagesContainerRef.current.scrollTo({
+      top: messagesContainerRef.current.scrollHeight,
+      behavior: 'smooth',
+    });
+  };
+
+  const handleNotificationClick = () => {
+    setShowNotificationPanel((prev) => !prev);
+  };
+
+  const handleNavToggle = () => {
+    setShowNavCard((prev) => !prev);
+  };
+
+  const toggleTourismMode = () => {
+    setTourismMode((prev) => !prev);
+    if (!tourismMode) {
+      setActiveAgent('Tourism');
+      setAgentIcon('🏖️');
+      setIsTourismBarOpen(true);
+    } else {
+      setActiveAgent('Main');
+      setAgentIcon('🤖');
+      setIsTourismBarOpen(false);
+    }
+  };
+
+  const handleCountryChange = (e) => {
+    const value = e.target.value;
+    setSelectedCountry(value);
+    if (value === 'Barbados') {
+      setLocationFlag({
+        country: 'Barbados',
+        code: 'BB',
+        emoji: '🇧🇧',
+      });
+    }
+  };
+
+  const handleInterestToggle = (interest) => {
+    setTripInterests((prev) =>
+      prev.includes(interest) ? prev.filter((i) => i !== interest) : [...prev, interest]
+    );
+  };
+
+  const detectSuggestedHotel = () => {
+    const budget = tripBudget.toLowerCase();
+    const interestSet = new Set(tripInterests);
+    let suggested = BARBADOS_HOTELS[2];
+    if (budget.includes('lux') || budget.includes('$4') || budget.includes('$5')) {
+      suggested = BARBADOS_HOTELS[1];
+    } else if (budget.includes('budget') || budget.includes('$1') || budget.includes('$2')) {
+      suggested = BARBADOS_HOTELS[3];
+    } else {
+      suggested = BARBADOS_HOTELS[2];
+    }
+    if (interestSet.has('Surfing')) {
+      suggested = BARBADOS_HOTELS[0];
+    }
+    return suggested;
+  };
+
+  const generateBucketList = async () => {
+    if (bucketListGenerated) return;
+    const suggestion = detectSuggestedHotel();
+    const prompt = `
+You are ISLEAI Tourism Agent for ${selectedCountry}.
+User budget: ${tripBudget}
+User stay: ${tripStay}
+User interests: ${tripInterests.join(', ') || 'not specified'}
+User dates: ${tripDates.start} to ${tripDates.end}
+Suggested base hotel: ${suggestion.name} in ${suggestion.location}.
+
+Please generate a friendly, day-by-day bucket list for their trip with:
+- Morning, afternoon, and evening suggestions
+- Mix of beach, culture, food, nightlife based on interests
+- 2-3 concrete named places per day
+- One short encouragement at the end
+`;
+    const bucketMessage = {
+      id: uuidv4(),
+      sender: 'user',
+      text: 'Create a personalised Barbados bucket list for my trip based on my details.',
+      createdAt: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, bucketMessage]);
+    setIsLoading(true);
+    try {
+      const response = await api.post('/api/chat/send', {
+        message: prompt,
+        sessionId,
+        userId: userId || 'guest',
+        agent: 'Tourism',
+        context: buildPayload(),
+      });
+      const assistantMessage = {
+        id: uuidv4(),
+        sender: 'assistant',
+        text: response.data.reply,
+        createdAt: new Date().toISOString(),
+        agent: 'Tourism',
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+      setBucketListGenerated(true);
+    } catch (error) {
+      console.error('Error generating bucket list', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
+  const handleEncouragementReminder = (value) => {
+    setEncouragementReminder(value);
+  };
+
+  const handleTourismBarClose = () => {
+    setIsTourismBarOpen(false);
+    if (tourismMode && activeAgent !== 'Tourism') {
+      setActiveAgent('Tourism');
+      setAgentIcon('🏖️');
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('auth_token');
-    navigate('/login', { replace: true });
-  };
-
-  const toggleNav = () => setIsNavOpen(!isNavOpen);
-  const toggleCountryMenu = () => setIsCountryMenuOpen(!isCountryMenuOpen);
-
-  const navItems = [
-    { name: 'Home', path: '/' },
-    { name: 'Profile', path: '/profile' },
-    { name: 'Saved Chats', path: '/saved-chats' },
-    { name: 'Settings', path: '/settings' },
-    { name: 'Help', path: '/help' },
-    {
-      name: 'Logout',
-      path: '/login',
-      onClick: (e) => {
-        e.preventDefault();
-        handleLogout();
-        setIsNavOpen(false);
-      },
-    },
-  ];
-
-  const isTourism = activeAgent === 'Tourism';
-  const showTourismBar = isTourism && isTourismBarOpen;
-
-  const handleShowFacts = async () => {
-    if (fetchingFactRef.current || !csrfToken) return;
-    fetchingFactRef.current = true;
-    try {
-      const res = await api.get('/api/facts', { params: { country: selectedCountry.name } });
-      setFact(
-        res.data || { questions: 'What is the capital of Barbados?', answers: 'Bridgetown' }
-      );
-      setIsFactsCardOpen(true);
-      setIsTipCardOpen(false);
-    } catch {
-      setFact({ questions: 'What is the capital of Barbados?', answers: 'Bridgetown' });
-      setIsFactsCardOpen(true);
-      setIsTipCardOpen(false);
-    } finally {
-      fetchingFactRef.current = false;
-    }
-  };
-
-  const startOnboarding = () => {
-    if (isOnboardingActive || hasCompletedOnboarding) return;
-    const initialStep = 1;
-    setIsOnboardingActive(true);
-    setOnboardingStep(initialStep);
-    setOnboardingData({
-      budget: '',
-      startDate: '',
-      endDate: '',
-      wantReminder: false,
-      stayOption: '',
-      interests: [],
-      wantBucket: false,
-    });
-    setMessages((prev) => [
+  const handleProximityToggle = (msgId) => {
+    setProximityToggles((prev) => ({
       ...prev,
-      {
-        id: uuidv4(),
-        role: 'assistant',
-        type: 'onboarding',
-        step: initialStep,
-        created_at: new Date().toISOString(),
-      },
-    ]);
-  };
-
-  const goToOnboardingStep = (step) => {
-    setOnboardingStep(step);
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: uuidv4(),
-        role: 'assistant',
-        type: 'onboarding',
-        step,
-        created_at: new Date().toISOString(),
-      },
-    ]);
-  };
-
-  const handleInterestToggle = (value) => {
-    setOnboardingData((prev) => {
-      const exists = prev.interests.includes(value);
-      const interests = exists
-        ? prev.interests.filter((v) => v !== value)
-        : [...prev.interests, value];
-      return { ...prev, interests };
-    });
-  };
-
-  const suggestStayOption = () => {
-    if (!onboardingData.budget) {
-      alert('Pick your budget first so I can suggest something Bajan-nice! 😄');
-      return;
-    }
-
-    let suggested = BARBADOS_HOTELS[2];
-
-    if (onboardingData.budget === '$200-5000') {
-      suggested = BARBADOS_HOTELS[2];
-    } else if (
-      onboardingData.budget === '$6000' ||
-      onboardingData.budget === '$10,000'
-    ) {
-      suggested = BARBADOS_HOTELS[1];
-    } else if (onboardingData.budget === 'Other') {
-      suggested = BARBADOS_HOTELS[3];
-    }
-
-    setOnboardingData((prev) => ({
-      ...prev,
-      stayOption: `Suggested: ${suggested.name} (${suggested.priceRange}, ⭐ ${suggested.rating})`,
+      [msgId]: !prev[msgId],
     }));
   };
 
-  const finishOnboarding = async (wantBucketList) => {
-    const updatedData = {
-      ...onboardingData,
-      wantBucket: wantBucketList,
-    };
-
-    setOnboardingData(updatedData);
-    setIsOnboardingActive(false);
-    setHasCompletedOnboarding(true);
-
-    const interestsText =
-      updatedData.interests && updatedData.interests.length
-        ? updatedData.interests.join(', ')
-        : 'Not specified yet';
-
-    const summaryText = [
-      "Sweet! I've saved your trip profile:",
-      `• Budget: ${updatedData.budget || 'Not specified'}`,
-      `• Dates: ${
-        updatedData.startDate && updatedData.endDate
-          ? `${updatedData.startDate} → ${updatedData.endDate}`
-          : 'Not specified'
-      }`,
-      `• Encouragement reminders: ${updatedData.wantReminder ? 'Yes' : 'No'}`,
-      `• Stay: ${updatedData.stayOption || 'Not decided yet'}`,
-      `• Interests: ${interestsText}`,
-      `• Bucket list: ${wantBucketList ? 'Yes please!' : 'Not right now'}`,
-    ].join('\n');
-
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: uuidv4(),
-        role: 'assistant',
-        content: summaryText,
-        created_at: new Date().toISOString(),
-        animated: false,
-      },
-    ]);
-
-    try {
-      if (csrfToken && userId && chatSessionId) {
-        await api.post('/api/tourism-onboarding/complete', {
-          sessionId: chatSessionId,
-          country: selectedCountry.name,
-          budget: updatedData.budget,
-          startDate: updatedData.startDate,
-          endDate: updatedData.endDate,
-          wantReminder: updatedData.wantReminder,
-          stayOption: updatedData.stayOption,
-          interests: updatedData.interests,
-          wantBucket: updatedData.wantBucket,
-        });
-      } else {
-        console.warn(
-          'Skipping onboarding save – missing csrfToken, userId or chatSessionId',
-          {
-            csrfTokenPresent: !!csrfToken,
-            userId,
-            chatSessionId,
-          }
-        );
-      }
-    } catch (err) {
-      console.error(
-        'Error saving onboarding',
-        err?.response?.data || err.message || err
-      );
-    }
+  const handleLoginClick = () => {
+    navigate('/login', { state: { from: location.pathname } });
   };
 
-  const displayCount = notificationCount > 9 ? '9+' : String(notificationCount);
+  const handleRegisterClick = () => {
+    navigate('/register', { state: { from: location.pathname } });
+  };
 
-  const renderMessageContent = (msg, isProximityOn = false) => {
-    if (msg.type === 'onboarding') {
-      const isCurrent = isOnboardingActive && msg.step === onboardingStep;
+  const renderTourismSummaryCard = () => {
+    if (!tourismMode && !tourismProfile) return null;
+    const flagImage =
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Flag_of_Barbados.svg/1200px-Flag_of_Barbados.svg.png';
+    return (
+      <div className="tourism-summary-card">
+        <div className="tourism-summary-header">
+          <img src={flagImage} alt="Barbados flag" className="tourism-summary-flag" />
+          <div>
+            <h3>Barbados Trip Snapshot</h3>
+            <p>Curated by ISLEAI Tourism Agent</p>
+          </div>
+        </div>
+        <div className="tourism-summary-body">
+          <div>
+            <strong>Country:</strong> {selectedCountry}
+          </div>
+          <div>
+            <strong>Budget:</strong> {tripBudget || 'Not set yet'}
+          </div>
+          <div>
+            <strong>Stay:</strong> {tripStay || 'Not set yet'}
+          </div>
+          <div>
+            <strong>Dates:</strong>{' '}
+            {tripDates.start && tripDates.end
+              ? `${tripDates.start} → ${tripDates.end}`
+              : 'Not set yet'}
+          </div>
+          <div>
+            <strong>Interests:</strong>{' '}
+            {tripInterests.length ? tripInterests.join(', ') : 'Not selected yet'}
+          </div>
+          <div>
+            <strong>Reminder:</strong>{' '}
+            {encouragementReminder ? encouragementReminder : 'No reminder set'}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
-      const baseCardStyle = {
-        background: '#ffffff',
-        borderRadius: '12px',
-        padding: '12px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.10)',
-        maxWidth: '100%',
-        fontSize: '14px',
-        color: '#111827',
-        opacity: isCurrent ? 1 : 0.7,
-        pointerEvents: isCurrent ? 'auto' : 'none',
+  const renderMessageContent = (message) => {
+    if (!message) return null;
+    const isAssistant = message.sender === 'assistant';
+    const isUser = message.sender === 'user';
+    const isSystem = message.sender === 'System';
+    const baseClass = isAssistant ? 'message assistant-message' : 'message user-message';
+    const extraClass = isSystem ? 'system-message' : '';
+    const isTourismMessage = message.agent === 'Tourism';
+    const proximityOn = proximityEnabled && proximityToggles[message.id];
+    let bubbleStyle = {};
+    if (isAssistant) {
+      bubbleStyle = isTourismMessage
+        ? {
+            background: '#F0F8FF',
+            border: '1px solid #B0E0E6',
+          }
+        : {
+            background: '#FFFFFF',
+            border: '1px solid #E0E0E0',
+          };
+    } else if (isUser) {
+      bubbleStyle = {
+        background: '#DCF8C6',
+        border: '1px solid #AEEBAA',
       };
-
-      if (msg.step === 1) {
-        return (
-          <div style={baseCardStyle}>
-            <div style={{ fontWeight: 600, marginBottom: 8 }}>Trip Budget</div>
-            <p style={{ marginBottom: 8 }}>
-              What&apos;s your total budget for this Barbados visit?
-            </p>
-            <select
-              value={onboardingData.budget}
-              disabled={!isCurrent}
-              onChange={(e) =>
-                setOnboardingData((prev) => ({ ...prev, budget: e.target.value }))
-              }
-              style={{
-                width: '100%',
-                padding: '8px',
-                borderRadius: '8px',
-                border: '1px solid '#d1d5db',
-                marginBottom: 12,
-              }}
-            >
-              <option value="">Select your budget</option>
-              <option value="$200-5000">$200–5,000</option>
-              <option value="$6000">$6,000</option>
-              <option value="$10,000">$10,000</option>
-              <option value="Other">Other</option>
-            </select>
-            <button
-              type="button"
-              disabled={!isCurrent || !onboardingData.budget}
-              onClick={() => goToOnboardingStep(2)}
-              style={{
-                background: '#1E90FF',
-                color: 'white',
-                border: 'none',
-                borderRadius: '999px',
-                padding: '8px 16px',
-                cursor: !isCurrent || !onboardingData.budget ? 'not-allowed' : 'pointer',
-              }}
-            >
-              Next
-            </button>
-          </div>
-        );
-      }
-
-      if (msg.step === 2) {
-        return (
-          <div style={baseCardStyle}>
-            <div style={{ fontWeight: 600, marginBottom: 8 }}>Trip Dates</div>
-            <p style={{ marginBottom: 8 }}>How long will your trip be?</p>
-            <div
-              style={{
-                display: 'flex',
-                gap: '8px',
-                marginBottom: 10,
-                flexWrap: 'wrap',
-              }}
-            >
-              <div style={{ flex: 1, minWidth: '120px' }}>
-                <label style={{ display: 'block', fontSize: '12px', marginBottom: 4 }}>
-                  Start date
-                </label>
-                <input
-                  type="date"
-                  disabled={!isCurrent}
-                  value={onboardingData.startDate}
-                  onChange={(e) =>
-                    setOnboardingData((prev) => ({
-                      ...prev,
-                      startDate: e.target.value,
-                    }))
-                  }
-                  style={{
-                    width: '100%',
-                    padding: '6px 8px',
-                    borderRadius: '8px',
-                    border: '1px solid #d1d5db',
-                  }}
-                />
-              </div>
-              <div style={{ flex: 1, minWidth: '120px' }}>
-                <label style={{ display: 'block', fontSize: '12px', marginBottom: 4 }}>
-                  End date
-                </label>
-                <input
-                  type="date'
-                  disabled={!isCurrent}
-                  value={onboardingData.endDate}
-                  onChange={(e) =>
-                    setOnboardingData((prev) => ({
-                      ...prev,
-                      endDate: e.target.value,
-                    }))
-                  }
-                  style={{
-                    width: '100%',
-                    padding: '6px 8px',
-                    borderRadius: '8px',
-                    border: '1px solid #d1d5db',
-                  }}
-                />
-              </div>
-            </div>
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '13px',
-                marginBottom: 12,
-              }}
-            >
-              <input
-                type="checkbox'
-                disabled={!isCurrent}
-                checked={onboardingData.wantReminder}
-                onChange={(e) =>
-                  setOnboardingData((prev) => ({
-                    ...prev,
-                    wantReminder: e.target.checked,
-                  }))
-                }
-              />
-              Want to set an encouragement reminder?
-            </label>
-            <button
-              type="button"
-              disabled={!isCurrent || !onboardingData.startDate || !onboardingData.endDate}
-              onClick={() => goToOnboardingStep(3)}
-              style={{
-                background: '#1E90FF',
-                color: 'white',
-                border: 'none',
-                borderRadius: '999px',
-                padding: '8px 16px',
-                cursor:
-                  !isCurrent || !onboardingData.startDate || !onboardingData.endDate
-                    ? 'not-allowed'
-                    : 'pointer',
-              }}
-            >
-              Next
-            </button>
-          </div>
-        );
-      }
-
-      if (msg.step === 3) {
-        return (
-          <div style={baseCardStyle}>
-            <div style={{ fontWeight: 600, marginBottom: 8 }}>Where do you plan to stay?</div>
-            <p style={{ marginBottom: 8 }}>
-              Pick an option or let me suggest one based on your budget.
-            </p>
-            <select
-              disabled={!isCurrent}
-              value={onboardingData.stayOption}
-              onChange={(e) =>
-                setOnboardingData((prev) => ({
-                  ...prev,
-                  stayOption: e.target.value,
-                }))
-              }
-              style={{
-                width: '100%',
-                padding: '8px',
-                borderRadius: '8px',
-                border: '1px solid #d1d5db',
-                marginBottom: 10,
-              }}
-            >
-              <option value="">Choose a place to stay</option>
-              {BARBADOS_HOTELS.map((h) => (
-                <option
-                  key={h.id}
-                  value={`${h.name} (${h.priceRange}, ⭐ ${h.rating})`}
-                >
-                  {h.name} — {h.priceRange} — ⭐ {h.rating}
-                </option>
-              ))}
-              <option value="Not sure yet">I&apos;m not sure yet</option>
-            </select>
-            <button
-              type="button"
-              disabled={!isCurrent}
-              onClick={suggestStayOption}
-              style={{
-                background: 'white',
-                border: '1px solid #1E90FF',
-                color: '#1E90FF',
-                borderRadius: '999px',
-                padding: '6px 12px',
-                fontSize: '13px',
-                marginBottom: 8,
-                cursor: !isCurrent ? 'not-allowed' : 'pointer',
-              }}
-            >
-              Suggest one for me
-            </button>
-            {onboardingData.stayOption && (
-              <div
-                style={{
-                  fontSize: '13px',
-                  marginBottom: 8,
-                  color: '#047857',
-                }}
-              >
-                {onboardingData.stayOption}
-              </div>
-            )}
-            <button
-              type="button"
-              disabled={!isCurrent || !onboardingData.stayOption}
-              onClick={() => goToOnboardingStep(4)}
-              style={{
-                background: '#1E90FF',
-                color: 'white',
-                border: 'none',
-                borderRadius: '999px',
-                padding: '8px 16px',
-                cursor:
-                  !isCurrent || !onboardingData.stayOption ? 'not-allowed' : 'pointer',
-              }}
-            >
-              Next
-            </button>
-          </div>
-        );
-      }
-
-      if (msg.step === 4) {
-        const interestOptions = [
-          'Surfing',
-          'Partying',
-          'Foodie',
-          'Culture',
-          'Nature',
-          'Family fun',
-          'Other',
-        ];
-
-        const isChecked = (val) => onboardingData.interests.includes(val);
-
-        return (
-          <div style={baseCardStyle}>
-            <div style={{ fontWeight: 600, marginBottom: 8 }}>Your Interests</div>
-            <p style={{ marginBottom: 8 }}>
-              What kind of vibes are you looking for on this trip?
-            </p>
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '6px',
-                marginBottom: 10,
-              }}
-            >
-              {interestOptions.map((opt) => (
-                <button
-                  key={opt}
-                  type="button'
-                  disabled={!isCurrent}
-                  onClick={() => handleInterestToggle(opt)}
-                  style={{
-                    padding: '6px 10px',
-                    borderRadius: '999px',
-                    border: isChecked(opt) ? '1px solid #1E90FF' : '1px solid #d1d5db',
-                    background: isChecked(opt) ? '#1E90FF' : '#ffffff',
-                    color: isChecked(opt) ? '#ffffff' : '#111827',
-                    fontSize: '13px',
-                    cursor: !isCurrent ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-            <button
-              type="button'
-              disabled={!isCurrent || onboardingData.interests.length === 0}
-              onClick={() => goToOnboardingStep(5)}
-              style={{
-                background: '#1E90FF',
-                color: 'white',
-                border: 'none',
-                borderRadius: '999px',
-                padding: '8px 16px',
-                cursor:
-                  !isCurrent || onboardingData.interests.length === 0
-                    ? 'not-allowed'
-                    : 'pointer',
-              }}
-            >
-              Next
-            </button>
-          </div>
-        );
-      }
-
-      if (msg.step === 5) {
-        return (
-          <div style={baseCardStyle}>
-            <div style={{ fontWeight: 600, marginBottom: 8 }}>Bucket List</div>
-            <p style={{ marginBottom: 10 }}>
-              Would you like me to create a personalized Barbados bucket list for you?
-            </p>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                type="button'
-                disabled={!isCurrent}
-                onClick={() => finishOnboarding(true)}
-                style={{
-                  flex: 1,
-                  background: '#1E90FF',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '999px',
-                  padding: '8px 0',
-                  cursor: !isCurrent ? 'not-allowed' : 'pointer',
-                }}
-              >
-                Yes, please
-              </button>
-              <button
-                type="button'
-                disabled={!isCurrent}
-                onClick={() => finishOnboarding(false)}
-                style={{
-                  flex: 1,
-                  background: '#ffffff',
-                  color: '#1F2933',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '999px',
-                  padding: '8px 0',
-                  cursor: !isCurrent ? 'not-allowed' : 'pointer',
-                }}
-              >
-                Not right now
-              </button>
-            </div>
-          </div>
-        );
-      }
-
-      return <div style={baseCardStyle}>Loading trip setup…</div>;
     }
-
-    if (msg.type === 'map' && msg.mapEmbedUrl) {
-      return (
+    const sanitizedText = sanitizeContent(message.text || '');
+    return (
+      <div className={`${baseClass} ${extraClass}`} style={bubbleStyle}>
+        <div className="message-meta">
+          <span className="message-sender">
+            {isAssistant && isTourismMessage ? 'Tourism Agent' : isAssistant ? 'ISLEAI' : 'You'}
+          </span>
+          {message.createdAt && (
+            <span className="message-time">
+              {new Date(message.createdAt).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </span>
+          )}
+        </div>
         <div
-          style={{
-            background: '#ffffff',
-            borderRadius: '12px',
-            padding: '12px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            maxWidth: '100%',
+          className="message-text"
+          dangerouslySetInnerHTML={{
+            __html: sanitizedText,
           }}
-        >
-          {msg.title && (
-            <div style={{ fontWeight: 600, marginBottom: '8px', color: '#111827' }}>
-              {msg.title}
-            </div>
-          )}
-          {msg.content && (
-            <div style={{ fontSize: '13px', marginBottom: '8px', color: '#4b5563' }}>
-              {msg.content}
-            </div>
-          )}
-          <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%' }}>
-            <iframe
-              src={msg.mapEmbedUrl}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                border: 0,
-                borderRadius: '8px',
-              }}
-              loading="lazy'
-              allowFullScreen
-              referrerPolicy="no-referrer-when-downgrade'
-              title={msg.title || 'Location map'}
-            />
-          </div>
-        </div>
-      );
-    }
-
-    if (msg.fileUrl) {
-      return (
-        <>
-          <div>{msg.content}</div>
-          {/\.(jpg|jpeg|png|gif|webp)$/i.test(msg.fileUrl) ? (
-            <img
-              src={msg.fileUrl}
-              alt="Uploaded'
-              style={{ maxWidth: '200px', marginTop: '10px' }}
-            />
-          ) : (
-            <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer">
-              View File
-            </a>
-          )}
-        </>
-      );
-    }
-
-    if (msg.role === 'assistant' && msg.isWelcome) {
-      const showPlanningButton =
-        activeAgent === 'Tourism' && !isOnboardingActive && !hasCompletedOnboarding;
-
-      return (
-        <div>
-          <div>{msg.content}</div>
-          {showPlanningButton && (
-            <button
-              type="button'
-              onClick={startOnboarding}
-              style={{
-                marginTop: '10px',
-                background: '#1E90FF',
-                color: 'white',
-                border: 'none',
-                borderRadius: '999px',
-                padding: '8px 16px',
-                fontSize: '14px',
-                cursor: 'pointer',
-              }}
-            >
-              Planning a Visit
-            </button>
-          )}
-        </div>
-      );
-    }
-
-    if (
-      msg.role === 'assistant' &&
-      (msg.agent === 'Tourism' || (!msg.agent && activeAgent === 'Tourism')) &&
-      !msg.isWelcome &&
-      msg.type !== 'map' &&
-      msg.type !== 'onboarding'
-    ) {
-      if (!isProximityOn) {
-        return msg.content;
-      }
-
-      return (
-        <div style={{ position: 'relative' }}>
-          <div
-            style={{
-              visibility: 'hidden',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-            }}
+        />
+        {proximityEnabled && (
+          <button
+            type="button"
+            className="proximity-toggle-button"
+            onClick={() => handleProximityToggle(message.id)}
           >
-            {msg.content}
+            {proximityOn ? 'Hide AI Insights' : 'Show AI Insights'}
+          </button>
+        )}
+        {proximityOn && (
+          <div className="proximity-container">
+            <VariableProximity messageId={message.id} text={message.text} />
           </div>
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              pointerEvents: 'none',
-            }}
-          >
-            <VariableProximity
-              label={msg.content}
-              className="variable-proximity-demo'
-              fromFontVariationSettings="'wght' 400, 'opsz' 9"
-              toFontVariationSettings="'wght' 1000, 'opsz' 40"
-              containerRef={messagesContainerRef}
-              radius={100}
-              falloff="linear'
-            />
-          </div>
-        </div>
-      );
-    }
-
-    if (msg.role === 'assistant') {
-      return msg.content;
-    }
-
-    return msg.content;
+        )}
+      </div>
+    );
   };
 
   return (
-    <div className="baje-container" style={{ zIndex: 100, position: 'relative' }}>
-      <div className="chat-header">
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <div
-            className="ai-avatar'
-            style={{
-              ...(avatarImage && {
-                backgroundImage: `url(${avatarImage})`,
-                backgroundColor: 'transparent',
-              }),
-            }}
+    <div className="baje-container">
+      <header className="chat-header">
+        <div className="chat-header-left">
+          <button
+            type="button"
+            className={`hamburger-button ${showNavCard ? 'active' : ''}`}
+            onClick={handleNavToggle}
+            aria-label={showNavCard ? 'Close navigation' : 'Open navigation'}
           >
-            {!avatarImage && 'ISLE'}
-          </div>
-          <div className="ai-info">
-            <div className="ai-name">ISLE</div>
-            <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
-              <div className="ai-status">Your {selectedCountry.name} Guide</div>
-              <div
-                className="barbados-flag'
-                onClick={toggleCountryMenu}
-                style={{
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '50%',
-                  background: `url(${selectedCountry.flagUrl}) center/cover`,
-                  marginLeft: '10px',
-                  cursor: 'pointer',
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="header-buttons">
-          <div
-            className="bell-container'
-            style={{ display: 'flex', marginRight: '8px', position: 'relative' }}
-          >
-            <button
-              className="notification-button'
-              onClick={() => {
-                if (chatSessionId && usageStartTime) {
-                  const durationSeconds = Math.round(
-                    (Date.now() - usageStartTime) / 1000
-                  );
-                  saveUsageTime(chatSessionId, durationSeconds);
-                }
-                localStorage.setItem(
-                  'lastSeenNotificationCount',
-                  notificationCount.toString()
-                );
-                localStorage.setItem('notificationsCount', notificationCount.toString());
-                window.dispatchEvent(new Event('notifications:updated'));
-                setShowNotificationBadge(false);
-                navigate('/notifications');
-              }}
-              style={{
-                background: 'rgba(255, 255, 255, 0.2)',
-                border: 'none',
-                borderRadius: '50%',
-                width: '30px',
-                height: '30px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'background 0.3s ease',
-                fontSize: '18px',
-              }}
-            >
-              🔔
-            </button>
-            <span
-              className="badge'
-              style={{
-                position: 'absolute',
-                top: '-8px',
-                right: '-12px',
-                zIndex: 2000,
-                backgroundColor: 'red',
-                color: 'white',
-                width: '20px',
-                height: '20px',
-                borderRadius: '50%',
-                padding: 0,
-                lineHeight: '20px',
-                textAlign: 'center',
-                fontSize: '12px',
-                fontWeight: 'bold',
-                display:
-                  notificationCount > 0 && showNotificationBadge ? 'flex' : 'none',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 0 0 2px white',
-              }}
-              aria-label={`Amount of Notifications: ${displayCount}`}
-              title={`Amount of Notifications: ${displayCount}`}
-            >
-              {displayCount}
+            {showNavCard ? (
+              <FontAwesomeIcon icon={faTimes} className="hamburger-button-icon" />
+            ) : (
+              <FontAwesomeIcon icon={faBars} className="hamburger-button-icon" />
+            )}
+          </button>
+          <div className="header-title-group">
+            <h1 className="chat-title">ISLEAI Tourism Agent</h1>
+            <span className="chat-subtitle">
+              Smart, Caribbean-first travel planning for {locationFlag.emoji} {locationFlag.country}
             </span>
           </div>
-
+        </div>
+        <div className="chat-header-right">
           <button
-            className={`hamburger-button ${isNavOpen ? 'active' : ''}`}
-            onClick={toggleNav}
+            type="button"
+            className="bell-container"
+            onClick={handleNotificationClick}
+            aria-label="Notifications"
           >
-            <span className="hamburger-button-span'></span>
-            <span className="hamburger-button-span'></span>
-            <span className="hamburger-button-span'></span>
+            <FontAwesomeIcon icon={faBell} className="notification-button" />
+            <span className={`badge ${hasNewNotifications ? 'pulsing' : ''}`}>
+              {notificationCount}
+            </span>
+          </button>
+          <button
+            type="button"
+            className={`tourism-toggle-button ${tourismMode ? 'active' : ''}`}
+            onClick={toggleTourismMode}
+          >
+            {tourismMode ? 'Tourism Mode: ON' : 'Tourism Mode: OFF'}
           </button>
         </div>
-      </div>
-
-      <div
-        className={`nav-overlay ${
-          isNavOpen || isCountryMenuOpen || isFactsCardOpen || isTipCardOpen
-            ? 'active'
-            : ''
-        }`}
-      >
-        <div className={`nav-card ${isNavOpen ? 'nav-card-open' : ''}`}>
-          <ul className="nav-list'>
-            {navItems.map((item) => (
-              <li key={item.name} className="nav-item'>
-                <Link
-                  to={item.path}
-                  className="nav-item-a'
-                  onClick={(e) => {
-                    if (item.onClick) {
-                      item.onClick(e);
-                    } else {
-                      if (chatSessionId && usageStartTime) {
-                        const durationSeconds = Math.round(
-                          (Date.now() - usageStartTime) / 1000
-                        );
-                        saveUsageTime(chatSessionId, durationSeconds);
-                      }
-                      setIsNavOpen(false);
-                    }
-                  }}
-                >
-                  {item.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-
-      <div
-        ref={messagesContainerRef}
-        className="chat-messages'
-        style={{
-          marginLeft: 0,
-          transition: 'margin-left .28s ease',
-        }}
-      >
-        {messages.map((msg) => {
-          const isAssistantTourismReply =
-            msg.role === 'assistant' &&
-            (msg.agent === 'Tourism' || (!msg.agent && activeAgent === 'Tourism')) &&
-            !msg.isWelcome &&
-            msg.type !== 'map' &&
-            msg.type !== 'onboarding';
-
-          const isProximityOn = !!proximityToggles[msg.id];
-
-          return (
-            <div
-              key={msg.id}
-              className="message-wrapper'
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-              }}
+      </header>
+      <div className="main-content">
+        <aside className={`nav-card ${showNavCard ? 'nav-card-open' : ''}`}>
+          <h2 className="nav-card-title">ISLEAI Tools</h2>
+          <nav className="nav-card-list">
+            <Link to="/profile" className="nav-card-item">
+              Profile & Preferences
+            </Link>
+            <Link to="/history" className="nav-card-item">
+              Conversation History
+            </Link>
+            <button
+              type="button"
+              className="nav-card-item nav-card-button"
+              onClick={() => setProximityEnabled((prev) => !prev)}
             >
-              <div
-                className="message'
-                style={{
-                  alignSelf: 'flex-start',
-                }}
-              >
-                {renderMessageContent(msg, isAssistantTourismReply ? isProximityOn : false)}
-              </div>
-
-              {isAssistantTourismReply && (
-                <button
-                  type="button'
-                  onClick={() =>
-                    setProximityToggles((prev) => ({
-                      ...prev,
-                      [msg.id]: !prev[msg.id],
-                    }))
-                  }
-                  style={{
-                    marginTop: '4px',
-                    marginLeft: '10px',
-                    fontSize: '13px',
-                    padding: '4px 6px',
-                    borderRadius: '999px',
-                    border: '1px solid #d1d5db',
-                    background: '#ffffff',
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                  title={
-                    isProximityOn
-                      ? 'Turn off variable proximity'
-                      : 'Turn on variable proximity'
-                  }
-                >
-                  <FontAwesomeIcon
-                    icon={faWaveSquare}
-                    style={{
-                      fontSize: '14px',
-                      opacity: isProximityOn ? 1 : 0.6,
-                    }}
-                  />
-                </button>
-              )}
-            </div>
-          );
-        })}
-        {isLoading && (
-          <div className="message'>
-            <div style={{ display: 'flex', gap: '5px' }}>
-              {[0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    backgroundColor: '#ccc',
-                    animation: 'bounce 1.4s infinite ease-in-out',
-                    animationDelay: `${i * 0.2}s`,
-                  }}
-                />
+              {proximityEnabled ? 'Disable AI Insights' : 'Enable AI Insights'}
+            </button>
+          </nav>
+          <section className="nav-card-section">
+            <h3 className="nav-card-section-title">Quick Starters</h3>
+            <ul className="nav-card-starters">
+              {(conversationStarters || []).map((starter) => (
+                <li key={starter} className="nav-card-starter-item">
+                  <button type="button" onClick={() => handleStarterClick(starter)}>
+                    {starter}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </aside>
+        <section className="chat-section">
+          {renderTourismSummaryCard()}
+          {showNotificationPanel && (
+            <div className="notification-panel">
+              <h3>Notifications</h3>
+              {notifications.length === 0 && <p>No notifications yet.</p>}
+              {notifications.map((note) => (
+                <div key={note.id} className="notification-item">
+                  <strong>{note.title}</strong>
+                  <p>{note.body}</p>
+                  {note.createdAt && (
+                    <span className="notification-time">
+                      {new Date(note.createdAt).toLocaleString()}
+                    </span>
+                  )}
+                </div>
               ))}
             </div>
+          )}
+          <div className="messages-wrapper" ref={messagesContainerRef}>
+            <div className="messages-container">
+              {messages.length === 0 && (
+                <div className="empty-state">
+                  <h2>Welcome to ISLEAI Tourism</h2>
+                  <p>Ask about Barbados trips, budgets, hotels, hidden gems, and more.</p>
+                </div>
+              )}
+              {messages.map((msg) => (
+                <div key={msg.id}>{renderMessageContent(msg)}</div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+            {showScrollToBottom && (
+              <button
+                type="button"
+                className="scroll-to-bottom-button"
+                onClick={handleScrollToBottom}
+              >
+                ↓
+              </button>
+            )}
           </div>
-        )}
-        <div ref={messagesEndRef} />
+          {showLoginPrompt && !isAuthenticated && (
+            <div className="login-prompt">
+              <p>You need to be logged in to continue the conversation.</p>
+              <div className="login-prompt-actions">
+                <button type="button" onClick={handleLoginClick}>
+                  Login
+                </button>
+                <button type="button" onClick={handleRegisterClick}>
+                  Register
+                </button>
+                <button type="button" onClick={() => setShowLoginPrompt(false)}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+          <div className="input-section">
+            <div className="input-row">
+              <textarea
+                className="chat-input"
+                placeholder={
+                  isTourismAgentActive
+                    ? 'Ask ISLEAI Tourism Agent about your trip...'
+                    : 'Ask ISLEAI anything...'
+                }
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyPress={handleKeyPress}
+                disabled={isLoading}
+                style={{ flexGrow: 1, marginRight: '10px' }}
+              />
+              <div
+                className="agent-menu-container"
+                style={{ position: 'relative', marginRight: '10px' }}
+                onMouseEnter={() => setIsAgentMenuOpen(true)}
+                onMouseLeave={() => setIsAgentMenuOpen(false)}
+              >
+                <button
+                  className="agent-button"
+                  type="button"
+                  aria-haspopup="menu"
+                  aria-expanded={isAgentMenuOpen}
+                  title={`Agent: ${activeAgent}`}
+                >
+                  {agentIcon}
+                </button>
+                <div
+                  className={`agent-menu ${isAgentMenuOpen ? 'open' : ''}`}
+                  role="menu"
+                  aria-label="Choose agent"
+                >
+                  {['Main', 'Tourism'].map((agent) => (
+                    <button
+                      key={agent}
+                      className={`agent-item ${activeAgent === agent ? 'active' : ''}`}
+                      role="menuitem"
+                      onClick={() => {
+                        setActiveAgent(agent);
+                        setAgentIcon(agent === 'Main' ? '🤖' : '🏖️');
+                        setIsAgentMenuOpen(false);
+                        if (agent !== 'Tourism') {
+                          setIsTourismBarOpen(false);
+                        }
+                      }}
+                    >
+                      {agent === 'Main' ? '🤖 Main Agent' : '🏖️ Tourism Agent'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="input-actions">
+                <label className="file-upload-label">
+                  Attach
+                  <input
+                    type="file"
+                    multiple
+                    onChange={handleFileChange}
+                    ref={fileInputRef}
+                    className="file-input-hidden"
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="submit-button"
+                  onClick={() => sendMessage()}
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Sending...' : 'Send'}
+                </button>
+              </div>
+            </div>
+            <AITextPressure text={inputValue} />
+          </div>
+        </section>
+        <ChatBarTourism
+          isOpen={isTourismBarOpen}
+          onClose={handleTourismBarClose}
+          selectedCountry={selectedCountry}
+          onCountryChange={handleCountryChange}
+          tripBudget={tripBudget}
+          setTripBudget={setTripBudget}
+          tripDates={tripDates}
+          setTripDates={setTripDates}
+          tripDuration={tripDuration}
+          setTripDuration={setTripDuration}
+          tripStay={tripStay}
+          setTripStay={setTripStay}
+          tripInterests={tripInterests}
+          handleInterestToggle={handleInterestToggle}
+          wantBucketList={wantBucketList}
+          setWantBucketList={setWantBucketList}
+          generateBucketList={generateBucketList}
+          encouragementReminder={encouragementReminder}
+          setEncouragementReminder={handleEncouragementReminder}
+          detectSuggestedHotel={detectSuggestedHotel}
+        />
       </div>
-
-      <div
-        className="facts-card'
-        style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '300px',
-          background: '#F5F5F5',
-          borderRadius: '10px',
-          padding: '20px',
-          boxShadow: '0px 5px 15px rgba(0, 0, 0, 0.5)',
-          display: isFactsCardOpen && !isTipCardOpen ? 'block' : 'none',
-          zIndex: 1003,
-          color: 'black',
-          textAlign: 'center',
-        }}
-      >
-        <button
-          className="facts-card-close'
-          onClick={() => setIsFactsCardOpen(false)}
-          style={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            background: 'transparent',
-            border: 'none',
-            fontSize: '16px',
-            cursor: 'pointer',
-            color: 'black',
-          }}
-        >
-          ✕
-        </button>
-        <div
-          style={{
-            fontWeight: 'bold',
-            fontSize: '16px',
-            marginBottom: '10px',
-          }}
-        >
-          Did you know?
-        </div>
-        <div style={{ fontSize: '14px', marginBottom: '8px' }}>{fact.questions}</div>
-        <div style={{ color: '#008000', fontSize: '14px' }}>{fact.answers}</div>
-      </div>
-
-      <div
-        className="tip-card'
-        style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '300px',
-          background: '#F5F5F5',
-          borderRadius: '10px',
-          padding: '20px',
-          boxShadow: '0px 5px 15px rgba(0, 0, 0, 0.5)',
-          display: isTipCardOpen && !isFactsCardOpen ? 'block' : 'none',
-          zIndex: 1003,
-          color: 'black',
-          textAlign: 'center',
-        }}
-      >
-        <button
-          className="tip-card-close'
-          onClick={() => setIsTipCardOpen(false)}
-          style={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            background: 'transparent',
-            border: 'none',
-            fontSize: '16px',
-            cursor: 'pointer',
-            color: 'black',
-          }}
-        >
-          ✕
-        </button>
-        <div
-          style={{
-            fontWeight: 'bold',
-            fontSize: '15px',
-            marginBottom: '15px',
-          }}
-        >
-          {selectedCountry.name} Travel Tip
-        </div>
-        <div style={{ fontSize: '14px' }}>{currentTip.tip_text}</div>
-      </div>
-
-      {showTourismBar && (
-        <div
-          ref={tourismBarRef}
-          style={{
-            position: 'absolute',
-            top: 60,
-            left: 0,
-            bottom: 80,
-            zIndex: 1001,
-          }}
-        >
-          <button
-            type="button'
-            onClick={() => setIsTourismBarOpen(false)}
-            style={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
-              width: 24,
-              height: 24,
-              borderRadius: '50%',
-              border: 'none',
-              background: 'rgba(0,0,0,0.4)',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              zIndex: 1002,
-            }}
-            aria-label="Close tourism tools"
-          >
-            ✕
-          </button>
-          <ChatBarTourism 
-            visible={true} 
-            onFactsClick={handleShowFacts}
-            onboardingData={onboardingData}
-            hasCompletedOnboarding={hasCompletedOnboarding}
-          />
-        </div>
-      )}
-
-      {isTourism && !showTourismBar && (
+      {tourismMode && (
         <button
           ref={tourismButtonRef}
-          type="button'
+          type="button"
           onClick={() => setIsTourismBarOpen(true)}
           style={{
             position: 'absolute',
@@ -1615,162 +881,541 @@ function Baje() {
           />
         </button>
       )}
-
-      <div
-        className="input-section'
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: '15px',
-          background: 'rgba(255, 255, 255, 0.1)',
-          zIndex: 100,
-          marginLeft: 0,
-          transition: 'margin-left .28s ease',
-        }}
-      >
-        <textarea
-          className="input-field'
-          rows={2}
-          placeholder={`Ask me about ${selectedCountry.name}...`}
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyPress={handleKeyPress}
-          disabled={isLoading}
-          style={{ flexGrow: 1, marginRight: '10px' }}
-        />
-
-        <div
-          className="agent-menu-container'
-          style={{ position: 'relative', marginRight: '10px' }}
-          onMouseEnter={() => setIsAgentMenuOpen(true)}
-          onMouseLeave={() => setIsAgentMenuOpen(false)}
-        >
-          <button
-            className="agent-button'
-            type="button'
-            aria-haspopup="menu'
-            aria-expanded={isAgentMenuOpen}
-            title={`Agent: ${activeAgent}`}
-          >
-            {agentIcon}
-          </button>
-
-          <div
-            className={`agent-menu ${isAgentMenuOpen ? 'open' : ''}`}
-            role="menu'
-            aria-label="Choose agent"
-          >
-            {['Main', 'Tourism'].map((agent) => (
-              <button
-                key={agent}
-                className={`agent-item ${activeAgent === agent ? 'active' : ''}`}
-                role="menuitem'
-                onClick={() => {
-                  setActiveAgent(agent);
-                  setAgentIcon(agent === 'Main' ? '🤖' : '🏖️');
-                  setIsAgentMenuOpen(false);
-                  if (agent !== 'Tourism') {
-                    setIsTourismBarOpen(false);
-                  }
-                }}
-              >
-                {agent === 'Main' && '🤖'}
-                {agent === 'Tourism' && '🏖️'}
-                <span style={{ marginLeft: 8 }}>{agent}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <button
-          className="submit-button'
-          onClick={handleSendMessage}
-          disabled={isLoading || !inputValue.trim()}
-          style={{
-            background: '#1E90FF',
-            border: 'none',
-            borderRadius: '50%',
-            width: '40px',
-            height: '40px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            cursor: 'pointer',
-            transition: '0.3s ease',
-          }}
-        >
-          {isLoading ? '...' : '➤'}
-        </button>
-      </div>
-
-      <style>{`
-        @keyframes bounce {
-          0%, 80%, 100% { transform: translateY(0); }
-          40% { transform: translateY(-6px); }
+      <style jsx>{`
+        .baje-container {
+          margin: 0;
+          padding: 0;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Ubuntu, 'Helvetica Neue',
+            Helvetica, Arial, sans-serif;
+          background: #f9fafb;
+          width: 100vw;
+          height: 100vh;
+          display: flex;
+          flex-direction: column;
+          position: relative;
         }
-        .baje-container { position: relative; z-index: 100; }
-        .chat-header { position: sticky; top: 0; z-index: 101; }
-        .nav-overlay {
-          position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-          background: rgba(0, 0, 0, 0); z-index: 99; transition: background 0.3s ease; visibility: hidden;
+        .chat-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px 16px;
+          background: linear-gradient(90deg, #1e90ff, #5a189a);
+          color: white;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+          z-index: 100;
         }
-        .nav-overlay.active { background: rgba(0, 0, 0, 0.5); visibility: visible; }
+        .chat-header-left {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .chat-header-right {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .chat-title {
+          font-size: 1.25rem;
+          margin: 0;
+        }
+        .chat-subtitle {
+          font-size: 0.85rem;
+          opacity: 0.9;
+        }
+        .header-title-group {
+          display: flex;
+          flex-direction: column;
+        }
+        .main-content {
+          flex: 1;
+          display: flex;
+          position: relative;
+          overflow: hidden;
+        }
         .nav-card {
-          position: fixed; top: 0; right: -300px; width: 250px; height: 100vh;
-          background: rgba(0, 0, 0, 0.9); padding: 20px; transition: right 0.3s ease; z-index: 1000;
-          visibility: hidden; border-radius: 10px; box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.35);
-          display: flex; flex-direction: column; align-items: center;
+          width: 260px;
+          background: #ffffff;
+          border-right: 1px solid #e0e0e0;
+          padding: 16px;
+          box-shadow: 2px 0 4px rgba(0, 0, 0, 0.04);
+          transform: translateX(-100%);
+          transition: transform 0.3s ease;
+          position: absolute;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          z-index: 90;
         }
-        .nav-card.nav-card-open { right: 0; visibility: visible; }
-        .nav-list {
-          list-style: none; padding: 0; margin: 150px 0 0 0;
-          display: flex; flex-direction: column; align-items: center; width: 100%;
+        .nav-card.nav-card-open {
+          transform: translateX(0);
         }
-        .nav-item { margin: 15px 0; width: 100%; text-align: center; }
-        .nav-item-a {
-          color: white; text-decoration: none; font-size: 18px; transition: color 0.2s ease;
-          display: block; padding: 10px 0;
+        .nav-card-title {
+          margin-top: 0;
+          margin-bottom: 12px;
+          font-size: 1.05rem;
+          font-weight: 600;
         }
-        .nav-item-a:hover { color: #1E90FF; }
-        .hamburger-button.active .hamburger-button-span { background: white; }
-        .hamburger-button.active .hamburger-button-span:nth-child(1) {
-          position: absolute; top: 50%; transform: translate(-50%, -50%) rotate(45deg);
+        .nav-card-list {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
         }
-        .hamburger-button.active .hamburger-button-span:nth-child(2) { opacity: 0; }
-        .hamburger-button.active .hamburger-button-span:nth-child(3) {
-          position: absolute; top: 50%; transform: translate(-50%, -50%) rotate(-45deg);
+        .nav-card-item {
+          display: block;
+          padding: 8px 10px;
+          border-radius: 6px;
+          background: #f3f4f6;
+          text-decoration: none;
+          color: #111827;
+          font-size: 0.9rem;
         }
-        .notification-button:hover { background: #1E90FF; }
-        .submit-button:hover, .barbados-flag:hover { background: #1873CC; }
-        .message { max-width: 70%; margin: 10px; border-radius: 5px; padding: 10px; }
-        .message img { max-width: 200px; border-radius: 5px; margin: 10px; }
-        .message a { color: #1E90FF; text-decoration: none; }
-        .message a:hover { text-decoration: underline; }
-        .bell-container { position: relative; width: 30px; height: 30px; cursor: pointer; }
-        .bell-container .badge { --badge-size: 20px; --badge-font: 11px; }
-        @media (max-width: 360px) {
-          .bell-container .badge { --badge-size: 24px; --badge-font: 13px; }
+        .nav-card-item:hover {
+          background: #e5e7eb;
         }
-        @media (min-width: 361px) and (max-width: 450px) {
-          .bell-container .badge { --badge-size: 22px; --badge-font: 12px; }
+        .nav-card-button {
+          border: none;
+          text-align: left;
+          cursor: pointer;
+        }
+        .nav-card-section {
+          margin-top: 16px;
+        }
+        .nav-card-section-title {
+          font-size: 0.9rem;
+          font-weight: 600;
+          margin-bottom: 8px;
+        }
+        .nav-card-starters {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+        }
+        .nav-card-starter-item {
+          margin-bottom: 4px;
+        }
+        .nav-card-starter-item button {
+          width: 100%;
+          background: #e0f2fe;
+          border: none;
+          border-radius: 6px;
+          padding: 6px 8px;
+          font-size: 0.85rem;
+          cursor: pointer;
+        }
+        .chat-section {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          padding: 16px;
+          padding-left: 16px;
+          padding-right: 16px;
+        }
+        .messages-wrapper {
+          flex: 1;
+          border-radius: 12px;
+          border: 1px solid #e5e7eb;
+          background: white;
+          overflow: hidden;
+          display: flex;
+          position: relative;
+        }
+        .messages-container {
+          flex: 1;
+          padding: 12px 16px 60px 16px;
+          overflow-y: auto;
+          position: relative;
+        }
+        .empty-state {
+          text-align: center;
+          margin-top: 40px;
+          color: #6b7280;
+        }
+        .empty-state h2 {
+          margin-bottom: 8px;
+        }
+        .message {
+          max-width: 70%;
+          margin: 8px 0;
+          padding: 10px 12px;
+          border-radius: 8px;
+          font-size: 0.95rem;
+          line-height: 1.4;
+        }
+        .assistant-message {
+          align-self: flex-start;
+        }
+        .user-message {
+          align-self: flex-end;
+        }
+        .system-message {
+          background: #fef3c7;
+          border: 1px solid #f59e0b;
+        }
+        .message-meta {
+          display: flex;
+          justify-content: space-between;
+          font-size: 0.75rem;
+          margin-bottom: 4px;
+          color: #6b7280;
+        }
+        .message-text a {
+          color: #1e40af;
+          text-decoration: underline;
+        }
+        .message-text img {
+          max-width: 100%;
+          border-radius: 6px;
+          margin-top: 6px;
+        }
+        .proximity-toggle-button {
+          margin-top: 6px;
+          background: transparent;
+          border: 1px dashed #9ca3af;
+          padding: 4px 8px;
+          border-radius: 6px;
+          font-size: 0.8rem;
+          cursor: pointer;
+        }
+        .proximity-container {
+          margin-top: 6px;
+          border-radius: 6px;
+          background: #f3f4f6;
+          padding: 6px 8px;
+        }
+        .scroll-to-bottom-button {
+          position: absolute;
+          right: 16px;
+          bottom: 16px;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: #1e90ff;
+          color: white;
+          border: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .login-prompt {
+          margin-top: 10px;
+          padding: 10px;
+          border-radius: 8px;
+          background: #fef3f2;
+          border: 1px solid #fecaca;
+        }
+        .login-prompt-actions {
+          display: flex;
+          gap: 8px;
+          margin-top: 8px;
+        }
+        .login-prompt-actions button {
+          padding: 4px 8px;
+          border-radius: 4px;
+          border: none;
+          cursor: pointer;
+        }
+        .input-section {
+          margin-top: 8px;
+        }
+        .input-row {
+          display: flex;
+          align-items: flex-end;
+          gap: 8px;
+        }
+        .chat-input {
+          flex: 1;
+          min-height: 40px;
+          max-height: 140px;
+          border-radius: 10px;
+          border: 1px solid #d1d5db;
+          padding: 8px 10px;
+          resize: vertical;
+          font-size: 0.95rem;
+        }
+        .input-actions {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+        .file-upload-label {
+          display: inline-block;
+          padding: 4px 8px;
+          background: #e5e7eb;
+          border-radius: 6px;
+          font-size: 0.8rem;
+          cursor: pointer;
+        }
+        .file-input-hidden {
+          display: none;
+        }
+        .submit-button {
+          padding: 6px 12px;
+          background: #1e90ff;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-size: 0.9rem;
+          cursor: pointer;
+        }
+        .tourism-summary-card {
+          margin-bottom: 10px;
+          background: #ffffff;
+          border-radius: 10px;
+          border: 1px solid #d1d5db;
+          padding: 10px;
+        }
+        .tourism-summary-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 6px;
+        }
+        .tourism-summary-flag {
+          width: 32px;
+          height: 20px;
+          object-fit: cover;
+          border-radius: 4px;
+        }
+        .tourism-summary-body > div {
+          font-size: 0.85rem;
+          margin-bottom: 2px;
+        }
+        .notification-panel {
+          margin-bottom: 10px;
+          background: #ffffff;
+          border-radius: 10px;
+          border: 1px solid #d1d5db;
+          padding: 10px;
+        }
+        .notification-item {
+          border-bottom: 1px solid #e5e7eb;
+          padding: 6px 0;
+        }
+        .notification-item:last-child {
+          border-bottom: none;
+        }
+        .notification-time {
+          display: block;
+          font-size: 0.75rem;
+          color: #6b7280;
+          margin-top: 2px;
+        }
+        .bell-container {
+          position: relative;
+          width: 34px;
+          height: 34px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.12);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: none;
+          cursor: pointer;
+        }
+        .notification-button {
+          font-size: 16px;
+          color: white;
+        }
+        .badge {
+          position: absolute;
+          top: -4px;
+          right: -4px;
+          background: #ef4444;
+          color: white;
+          border-radius: 999px;
+          padding: 2px 5px;
+          font-size: 0.6rem;
+          font-weight: 600;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 16px;
+        }
+        .badge.pulsing {
+          animation: pulse-badge 1.5s infinite;
+        }
+        @keyframes pulse-badge {
+          0% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.15);
+          }
+          100% {
+            transform: scale(1);
+          }
+        }
+        .hamburger-button {
+          width: 34px;
+          height: 34px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.12);
+          border: none;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .hamburger-button-icon {
+          font-size: 16px;
+          color: white;
+        }
+        .tourism-toggle-button {
+          padding: 6px 12px;
+          border-radius: 999px;
+          border: none;
+          background: rgba(255, 255, 255, 0.14);
+          color: white;
+          font-size: 0.85rem;
+          cursor: pointer;
+        }
+        .tourism-toggle-button.active {
+          background: #22c55e;
+        }
+        .agent-menu-container {
+          position: relative;
+        }
+        .agent-button {
+          width: 34px;
+          height: 34px;
+          border-radius: 50%;
+          border: 1px solid #d1d5db;
+          background: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+        }
+        .agent-menu {
+          position: absolute;
+          bottom: 40px;
+          right: 0;
+          background: #ffffff;
+          border-radius: 8px;
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+          padding: 6px 0;
+          opacity: 0;
+          pointer-events: none;
+          transform: translateY(6px);
+          transition: opacity 0.15s ease, transform 0.15s ease;
+          min-width: 160px;
+          z-index: 100;
+        }
+        .agent-menu.open {
+          opacity: 1;
+          pointer-events: auto;
+          transform: translateY(0);
+        }
+        .agent-item {
+          display: block;
+          width: 100%;
+          text-align: left;
+          background: transparent;
+          border: none;
+          padding: 6px 10px;
+          font-size: 0.85rem;
+          cursor: pointer;
+        }
+        .agent-item.active {
+          background: #eff6ff;
+        }
+        .chat-header-left,
+        .chat-header-right {
+          gap: 8px;
         }
         @media (min-width: 768px) {
-          .bell-container .badge { --badge-size: 20px; --badge-font: 11px; }
+          .baje-container {
+            height: 100vh;
+          }
+          .main-content {
+            padding-right: 16px;
+          }
+          .nav-card {
+            position: relative;
+            transform: translateX(0);
+          }
+        }
+        @media (max-width: 767px) {
+          .chat-header {
+            flex-wrap: wrap;
+          }
+          .chat-section {
+            padding: 10px;
+          }
+          .messages-container {
+            padding: 8px 10px 60px 10px;
+          }
+          .message {
+            max-width: 100%;
+          }
+          .nav-card {
+            width: 80%;
+          }
+          .header-title-group {
+            max-width: 70%;
+          }
+          .chat-subtitle {
+            display: none;
+          }
+        }
+        .nav-card {
+          border-radius: 0 8px 8px 0;
+        }
+        .nav-card-open {
+          transform: translateX(0);
+        }
+        .nav-card-title {
+          font-weight: 600;
+        }
+        .nav-card-list a,
+        .nav-card-list button {
+          font-size: 0.9rem;
+        }
+        .nav-card-section-title {
+          font-size: 0.85rem;
+        }
+        .nav-card-starter-item button {
+          font-size: 0.8rem;
+        }
+        .nav-card {
+          box-shadow: 2px 0 4px rgba(0, 0, 0, 0.04);
+        }
+        .bell-container .badge {
+          --badge-size: 18px;
+          --badge-font: 10px;
+        }
+        @media (min-width: 768px) {
+          .bell-container .badge {
+            --badge-size: 20px;
+            --badge-font: 11px;
+          }
         }
         @media only screen and (max-width: 450px) {
-          .chat-header { padding: 10px; }
-          .hamburger-button { margin-left: auto; }
-          .nav-card { width: 100%; max-width: 450px; right: -450px; border-radius: 0; }
-          .nav-card.nav-card-open { right: 0; }
+          .chat-header {
+            padding: 10px;
+          }
+          .hamburger-button {
+            margin-left: auto;
+          }
+          .nav-card {
+            width: 100%;
+            max-width: 450px;
+            right: -450px;
+            border-radius: 0;
+          }
+          .nav-card.nav-card-open {
+            right: 0;
+          }
         }
-        @media (max-width: 768px) {
+        @media only screen and (max-width: 1024px) {
           .agent-menu.open {
-            position: absolute;
+            position: fixed;
             right: 70px;
-            bottom: 90px;
-            z-index: 2000;
-            transform: none;
+            bottom: 80px;
+            margin-right: 8px;
+            z-index: 1100;
           }
         }
       `}</style>
