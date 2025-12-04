@@ -7,7 +7,7 @@ import './Baje.css';
 import './tailwind.css';
 import AITextPressure from './AITextPressure';
 import ChatBarTourism from './ChatBarTourism';
-import VariableProximity from './components/VariableProximity';
+import VariableProximity from './VariableProximity';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUmbrellaBeach, faBell, faBars, faTimes } from '@fortawesome/free-solid-svg-icons';
 
