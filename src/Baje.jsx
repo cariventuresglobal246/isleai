@@ -5,12 +5,11 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import sanitizeHtml from 'sanitize-html';
 import './Baje.css';
 import './tailwind.css';
-import ChatBarTourism from './ChatBarTourism'; // tourism sidebar
+import ChatBarTourism from './ChatBarTourism';
 import VariableProximity from '../components/VariableProximity';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUmbrellaBeach, faWaveSquare } from '@fortawesome/free-solid-svg-icons';
 
-// Simple Barbados accommodation options for onboarding
 const BARBADOS_HOTELS = [
   {
     id: 'o2',
@@ -38,7 +37,6 @@ const BARBADOS_HOTELS = [
   },
 ];
 
-// Shared Axios instance
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,
@@ -60,14 +58,12 @@ function Baje() {
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [avatarImage, setAvatarImage] = useState(null);
 
-  // Agent picker
   const [isAgentMenuOpen, setIsAgentMenuOpen] = useState(false);
   const [activeAgent, setActiveAgent] = useState('Main');
   const [agentIcon, setAgentIcon] = useState('🤖');
 
   const [isCountryMenuOpen, setIsCountryMenuOpen] = useState(false);
 
-  // Fact/Tip UI state
   const [isFactsCardOpen, setIsFactsCardOpen] = useState(false);
   const [isTipCardOpen, setIsTipCardOpen] = useState(false);
   const [fact, setFact] = useState({ questions: '', answers: '' });
@@ -87,12 +83,10 @@ function Baje() {
   const [userId, setUserId] = useState(null);
   const navigate = useNavigate();
 
-  const TIP_INTERVAL = 1800000; // 30m
+  const TIP_INTERVAL = 1800000;
 
-  // Tourism sidebar toggle
   const [isTourismBarOpen, setIsTourismBarOpen] = useState(false);
 
-  // Onboarding state for "Planning a Visit"
   const [isOnboardingActive, setIsOnboardingActive] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [onboardingData, setOnboardingData] = useState({
@@ -106,13 +100,11 @@ function Baje() {
   });
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
 
-  // Per-message VariableProximity toggle for tourism agent
-  const [proximityToggles, setProximityToggles] = useState({}); // { [msgId]: boolean }
+  const [proximityToggles, setProximityToggles] = useState({});
 
   const MAX_FILE_SIZE = 10 * 1024 * 1024;
   const TIP_TIMER_KEY = 'tipTimerStart';
 
-  /* ---------------------- Axios CSRF interceptor ---------------------- */
   useEffect(() => {
     const reqId = api.interceptors.request.use((cfg) => {
       if (csrfToken) cfg.headers['X-CSRF-Token'] = csrfToken;
@@ -133,7 +125,6 @@ function Baje() {
     };
   }, [csrfToken, navigate]);
 
-  /* -------------------------- CSRF on mount -------------------------- */
   useEffect(() => {
     const fetchCsrfToken = async () => {
       try {
@@ -155,7 +146,6 @@ function Baje() {
     fetchCsrfToken();
   }, []);
 
-  /* ------------------------- Fetch user profile ------------------------- */
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (!csrfToken || fetchingProfileRef.current) return;
@@ -173,10 +163,8 @@ function Baje() {
     if (csrfToken) fetchUserProfile();
   }, [csrfToken, navigate]);
 
-  /* -------------------- Fetch Onboarding Status (NEW) -------------------- */
   useEffect(() => {
     const fetchOnboardingStatus = async () => {
-      // Only fetch if we have auth + selected country
       if (!csrfToken || !userId || !selectedCountry.name) return;
 
       try {
@@ -184,15 +172,12 @@ function Baje() {
           params: { country: selectedCountry.name },
         });
 
-        // 1. Mark completed
         if (res.data.hasCompletedOnboarding) {
           setHasCompletedOnboarding(true);
         }
 
-        // 2. Populate state from DB if data exists
         if (res.data.onboarding) {
           const dbData = res.data.onboarding;
-          // Map snake_case (DB) -> camelCase (Frontend State)
           setOnboardingData({
             budget: dbData.budget || '',
             startDate: dbData.start_date || '',
@@ -211,7 +196,6 @@ function Baje() {
     fetchOnboardingStatus();
   }, [csrfToken, userId, selectedCountry.name]);
 
-  /* ----------------------- Initialize chat session ----------------------- */
   useEffect(() => {
     if (location.state?.restoredChat) {
       const { id, messages } = location.state.restoredChat;
@@ -235,7 +219,6 @@ function Baje() {
     setUsageStartTime(Date.now());
   }, [selectedCountry, location.state]);
 
-  /* --------------------------- Notifications --------------------------- */
   useEffect(() => {
     const fetchNotificationCount = async () => {
       if (!csrfToken || !userId) return;
@@ -291,9 +274,7 @@ function Baje() {
             localStorage.getItem('lastSeenNotificationCount') || '0'
           );
           setShowNotificationBadge(count > lastSeen);
-        } catch {
-          /* no-op */
-        }
+        } catch {}
       }
     };
     sync();
@@ -315,14 +296,12 @@ function Baje() {
     };
   }, [csrfToken, userId]);
 
-  /* ----------------------- Persist chat on change ----------------------- */
   useEffect(() => {
     if (messages.some((m) => m.role === 'user')) {
       saveChat(chatSessionId, messages);
     }
   }, [messages, chatSessionId]);
 
-  /* ------------------------ Tips timer ONLY ------------------------ */
   useEffect(() => {
     const initializeTimer = (key, interval, callback) => {
       const startTime = localStorage.getItem(key);
@@ -378,12 +357,10 @@ function Baje() {
     }
   }, [csrfToken, selectedCountry.name, isFactsCardOpen, isTipCardOpen]);
 
-  /* ----------------------------- Scroll down ----------------------------- */
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  /* ----------------------- Save usage on unmount ----------------------- */
   useEffect(() => {
     return () => {
       if (chatSessionId && usageStartTime) {
@@ -393,7 +370,6 @@ function Baje() {
     };
   }, [chatSessionId, usageStartTime]);
 
-  /* ------------------ Persist Agent Picker across refresh ----------------- */
   useEffect(() => {
     const a = localStorage.getItem('activeAgent');
     const i = localStorage.getItem('agentIcon');
@@ -405,7 +381,6 @@ function Baje() {
     localStorage.setItem('agentIcon', agentIcon);
   }, [activeAgent, agentIcon]);
 
-  /* -------------------- Click-outside to close tourism bar -------------------- */
   useEffect(() => {
     if (!isTourismBarOpen) return;
 
@@ -428,7 +403,6 @@ function Baje() {
     };
   }, [isTourismBarOpen]);
 
-  /* ----------------------------- API helpers ----------------------------- */
   const saveChat = async (sessionId, chatMessages) => {
     try {
       if (!csrfToken || !userId) return;
@@ -484,7 +458,7 @@ function Baje() {
       const assistantMessage = {
         id: uuidv4(),
         role: 'assistant',
-        agent: activeAgent, // tag which agent answered
+        agent: activeAgent,
         type: res.data.responseType || 'text',
         title: res.data.title,
         mapEmbedUrl: res.data.mapEmbedUrl,
@@ -573,8 +547,6 @@ function Baje() {
     }
   };
 
-  // ---------------- Onboarding helpers ("Planning a Visit") ----------------
-
   const startOnboarding = () => {
     if (isOnboardingActive || hasCompletedOnboarding) return;
     const initialStep = 1;
@@ -631,17 +603,17 @@ function Baje() {
       return;
     }
 
-    let suggested = BARBADOS_HOTELS[2]; // default
+    let suggested = BARBADOS_HOTELS[2];
 
     if (onboardingData.budget === '$200-5000') {
-      suggested = BARBADOS_HOTELS[2]; // Accra
+      suggested = BARBADOS_HOTELS[2];
     } else if (
       onboardingData.budget === '$6000' ||
       onboardingData.budget === '$10,000'
     ) {
-      suggested = BARBADOS_HOTELS[1]; // Sandals
+      suggested = BARBADOS_HOTELS[1];
     } else if (onboardingData.budget === 'Other') {
-      suggested = BARBADOS_HOTELS[3]; // Airbnb
+      suggested = BARBADOS_HOTELS[3];
     }
 
     setOnboardingData((prev) => ({
@@ -651,13 +623,11 @@ function Baje() {
   };
 
   const finishOnboarding = async (wantBucketList) => {
-    // Build an updated snapshot of onboarding data
     const updatedData = {
       ...onboardingData,
       wantBucket: wantBucketList,
     };
 
-    // Update React state
     setOnboardingData(updatedData);
     setIsOnboardingActive(false);
     setHasCompletedOnboarding(true);
@@ -681,7 +651,6 @@ function Baje() {
       `• Bucket list: ${wantBucketList ? 'Yes please!' : 'Not right now'}`,
     ].join('\n');
 
-    // Show summary message in the chat
     setMessages((prev) => [
       ...prev,
       {
@@ -693,7 +662,6 @@ function Baje() {
       },
     ]);
 
-    // Persist onboarding to backend controller
     try {
       if (csrfToken && userId && chatSessionId) {
         await api.post('/api/tourism-onboarding/complete', {
@@ -727,10 +695,7 @@ function Baje() {
 
   const displayCount = notificationCount > 9 ? '9+' : String(notificationCount);
 
-  // ----------- Message renderer (welcome, onboarding, proximity text) -----------
-
   const renderMessageContent = (msg, isProximityOn = false) => {
-    // Onboarding Q&A cards
     if (msg.type === 'onboarding') {
       const isCurrent = isOnboardingActive && msg.step === onboardingStep;
 
@@ -747,7 +712,6 @@ function Baje() {
       };
 
       if (msg.step === 1) {
-        // Budget card
         return (
           <div style={baseCardStyle}>
             <div style={{ fontWeight: 600, marginBottom: 8 }}>Trip Budget</div>
@@ -764,7 +728,7 @@ function Baje() {
                 width: '100%',
                 padding: '8px',
                 borderRadius: '8px',
-                border: '1px solid #d1d5db',
+                border: '1px solid '#d1d5db',
                 marginBottom: 12,
               }}
             >
@@ -794,7 +758,6 @@ function Baje() {
       }
 
       if (msg.step === 2) {
-        // Trip dates + reminder
         return (
           <div style={baseCardStyle}>
             <div style={{ fontWeight: 600, marginBottom: 8 }}>Trip Dates</div>
@@ -834,7 +797,7 @@ function Baje() {
                   End date
                 </label>
                 <input
-                  type="date"
+                  type="date'
                   disabled={!isCurrent}
                   value={onboardingData.endDate}
                   onChange={(e) =>
@@ -862,7 +825,7 @@ function Baje() {
               }}
             >
               <input
-                type="checkbox"
+                type="checkbox'
                 disabled={!isCurrent}
                 checked={onboardingData.wantReminder}
                 onChange={(e) =>
@@ -897,7 +860,6 @@ function Baje() {
       }
 
       if (msg.step === 3) {
-        // Where do you plan to stay? (hotels list + suggestion)
         return (
           <div style={baseCardStyle}>
             <div style={{ fontWeight: 600, marginBottom: 8 }}>Where do you plan to stay?</div>
@@ -981,7 +943,6 @@ function Baje() {
       }
 
       if (msg.step === 4) {
-        // Interests
         const interestOptions = [
           'Surfing',
           'Partying',
@@ -1011,7 +972,7 @@ function Baje() {
               {interestOptions.map((opt) => (
                 <button
                   key={opt}
-                  type="button"
+                  type="button'
                   disabled={!isCurrent}
                   onClick={() => handleInterestToggle(opt)}
                   style={{
@@ -1029,7 +990,7 @@ function Baje() {
               ))}
             </div>
             <button
-              type="button"
+              type="button'
               disabled={!isCurrent || onboardingData.interests.length === 0}
               onClick={() => goToOnboardingStep(5)}
               style={{
@@ -1051,7 +1012,6 @@ function Baje() {
       }
 
       if (msg.step === 5) {
-        // Bucket list yes/no
         return (
           <div style={baseCardStyle}>
             <div style={{ fontWeight: 600, marginBottom: 8 }}>Bucket List</div>
@@ -1060,7 +1020,7 @@ function Baje() {
             </p>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
-                type="button"
+                type="button'
                 disabled={!isCurrent}
                 onClick={() => finishOnboarding(true)}
                 style={{
@@ -1076,7 +1036,7 @@ function Baje() {
                 Yes, please
               </button>
               <button
-                type="button"
+                type="button'
                 disabled={!isCurrent}
                 onClick={() => finishOnboarding(false)}
                 style={{
@@ -1099,7 +1059,6 @@ function Baje() {
       return <div style={baseCardStyle}>Loading trip setup…</div>;
     }
 
-    // Map card
     if (msg.type === 'map' && msg.mapEmbedUrl) {
       return (
         <div
@@ -1133,9 +1092,9 @@ function Baje() {
                 border: 0,
                 borderRadius: '8px',
               }}
-              loading="lazy"
+              loading="lazy'
               allowFullScreen
-              referrerPolicy="no-referrer-when-downgrade"
+              referrerPolicy="no-referrer-when-downgrade'
               title={msg.title || 'Location map'}
             />
           </div>
@@ -1143,7 +1102,6 @@ function Baje() {
       );
     }
 
-    // File upload responses (if backend sends fileUrl)
     if (msg.fileUrl) {
       return (
         <>
@@ -1151,7 +1109,7 @@ function Baje() {
           {/\.(jpg|jpeg|png|gif|webp)$/i.test(msg.fileUrl) ? (
             <img
               src={msg.fileUrl}
-              alt="Uploaded"
+              alt="Uploaded'
               style={{ maxWidth: '200px', marginTop: '10px' }}
             />
           ) : (
@@ -1163,7 +1121,6 @@ function Baje() {
       );
     }
 
-    // Welcome message with "Planning a Visit" button (Tourism agent only)
     if (msg.role === 'assistant' && msg.isWelcome) {
       const showPlanningButton =
         activeAgent === 'Tourism' && !isOnboardingActive && !hasCompletedOnboarding;
@@ -1173,11 +1130,11 @@ function Baje() {
           <div>{msg.content}</div>
           {showPlanningButton && (
             <button
-              type="button"
+              type="button'
               onClick={startOnboarding}
               style={{
                 marginTop: '10px',
-                background: '#1E90FF', // dodger blue
+                background: '#1E90FF',
                 color: 'white',
                 border: 'none',
                 borderRadius: '999px',
@@ -1193,7 +1150,6 @@ function Baje() {
       );
     }
 
-    // Tourism agent normal response (VariableProximity only affects text; button is rendered outside)
     if (
       msg.role === 'assistant' &&
       (msg.agent === 'Tourism' || (!msg.agent && activeAgent === 'Tourism')) &&
@@ -1202,14 +1158,11 @@ function Baje() {
       msg.type !== 'onboarding'
     ) {
       if (!isProximityOn) {
-        // Just normal text when proximity is off
         return msg.content;
       }
 
-      // VariableProximity ON: overlay effect but keep same layout space INSIDE .message
       return (
         <div style={{ position: 'relative' }}>
-          {/* Invisible text to preserve layout inside .message */}
           <div
             style={{
               visibility: 'hidden',
@@ -1228,24 +1181,22 @@ function Baje() {
           >
             <VariableProximity
               label={msg.content}
-              className="variable-proximity-demo"
+              className="variable-proximity-demo'
               fromFontVariationSettings="'wght' 400, 'opsz' 9"
               toFontVariationSettings="'wght' 1000, 'opsz' 40"
               containerRef={messagesContainerRef}
               radius={100}
-              falloff="linear"
+              falloff="linear'
             />
           </div>
         </div>
       );
     }
 
-    // Main agent: plain text always
     if (msg.role === 'assistant') {
       return msg.content;
     }
 
-    // default user / other roles
     return msg.content;
   };
 
@@ -1254,7 +1205,7 @@ function Baje() {
       <div className="chat-header">
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div
-            className="ai-avatar"
+            className="ai-avatar'
             style={{
               ...(avatarImage && {
                 backgroundImage: `url(${avatarImage})`,
@@ -1269,7 +1220,7 @@ function Baje() {
             <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
               <div className="ai-status">Your {selectedCountry.name} Guide</div>
               <div
-                className="barbados-flag"
+                className="barbados-flag'
                 onClick={toggleCountryMenu}
                 style={{
                   width: '20px',
@@ -1286,11 +1237,11 @@ function Baje() {
 
         <div className="header-buttons">
           <div
-            className="bell-container"
+            className="bell-container'
             style={{ display: 'flex', marginRight: '8px', position: 'relative' }}
           >
             <button
-              className="notification-button"
+              className="notification-button'
               onClick={() => {
                 if (chatSessionId && usageStartTime) {
                   const durationSeconds = Math.round(
@@ -1324,7 +1275,7 @@ function Baje() {
               🔔
             </button>
             <span
-              className="badge"
+              className="badge'
               style={{
                 position: 'absolute',
                 top: '-8px',
@@ -1357,9 +1308,9 @@ function Baje() {
             className={`hamburger-button ${isNavOpen ? 'active' : ''}`}
             onClick={toggleNav}
           >
-            <span className="hamburger-button-span"></span>
-            <span className="hamburger-button-span"></span>
-            <span className="hamburger-button-span"></span>
+            <span className="hamburger-button-span'></span>
+            <span className="hamburger-button-span'></span>
+            <span className="hamburger-button-span'></span>
           </button>
         </div>
       </div>
@@ -1372,12 +1323,12 @@ function Baje() {
         }`}
       >
         <div className={`nav-card ${isNavOpen ? 'nav-card-open' : ''}`}>
-          <ul className="nav-list">
+          <ul className="nav-list'>
             {navItems.map((item) => (
-              <li key={item.name} className="nav-item">
+              <li key={item.name} className="nav-item'>
                 <Link
                   to={item.path}
-                  className="nav-item-a"
+                  className="nav-item-a'
                   onClick={(e) => {
                     if (item.onClick) {
                       item.onClick(e);
@@ -1400,10 +1351,9 @@ function Baje() {
         </div>
       </div>
 
-      {/* Chat messages */}
       <div
         ref={messagesContainerRef}
-        className="chat-messages"
+        className="chat-messages'
         style={{
           marginLeft: 0,
           transition: 'margin-left .28s ease',
@@ -1420,30 +1370,27 @@ function Baje() {
           const isProximityOn = !!proximityToggles[msg.id];
 
           return (
-            // Parent wrapper (not visible)
             <div
               key={msg.id}
-              className="message-wrapper"
+              className="message-wrapper'
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'flex-start', // everything on left side
+                alignItems: 'flex-start',
               }}
             >
-              {/* Actual bubble/card */}
               <div
-                className="message"
+                className="message'
                 style={{
-                  alignSelf: 'flex-start', // user + assistant both left
+                  alignSelf: 'flex-start',
                 }}
               >
                 {renderMessageContent(msg, isAssistantTourismReply ? isProximityOn : false)}
               </div>
 
-              {/* Variable Proximity toggle button as sibling, bottom-left */}
               {isAssistantTourismReply && (
                 <button
-                  type="button"
+                  type="button'
                   onClick={() =>
                     setProximityToggles((prev) => ({
                       ...prev,
@@ -1482,7 +1429,7 @@ function Baje() {
           );
         })}
         {isLoading && (
-          <div className="message">
+          <div className="message'>
             <div style={{ display: 'flex', gap: '5px' }}>
               {[0, 1, 2].map((i) => (
                 <div
@@ -1503,9 +1450,8 @@ function Baje() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Facts Card */}
       <div
-        className="facts-card"
+        className="facts-card'
         style={{
           position: 'fixed',
           top: '50%',
@@ -1523,7 +1469,7 @@ function Baje() {
         }}
       >
         <button
-          className="facts-card-close"
+          className="facts-card-close'
           onClick={() => setIsFactsCardOpen(false)}
           style={{
             position: 'absolute',
@@ -1551,9 +1497,8 @@ function Baje() {
         <div style={{ color: '#008000', fontSize: '14px' }}>{fact.answers}</div>
       </div>
 
-      {/* Tip Card */}
       <div
-        className="tip-card"
+        className="tip-card'
         style={{
           position: 'fixed',
           top: '50%',
@@ -1571,7 +1516,7 @@ function Baje() {
         }}
       >
         <button
-          className="tip-card-close"
+          className="tip-card-close'
           onClick={() => setIsTipCardOpen(false)}
           style={{
             position: 'absolute',
@@ -1598,7 +1543,6 @@ function Baje() {
         <div style={{ fontSize: '14px' }}>{currentTip.tip_text}</div>
       </div>
 
-      {/* Tourism sidebar inside container, above input (LEFT side) */}
       {showTourismBar && (
         <div
           ref={tourismBarRef}
@@ -1611,7 +1555,7 @@ function Baje() {
           }}
         >
           <button
-            type="button"
+            type="button'
             onClick={() => setIsTourismBarOpen(false)}
             style={{
               position: 'absolute',
@@ -1636,18 +1580,16 @@ function Baje() {
           <ChatBarTourism 
             visible={true} 
             onFactsClick={handleShowFacts}
-            // ✅ PASSED: The new onboarding data
             onboardingData={onboardingData}
             hasCompletedOnboarding={hasCompletedOnboarding}
           />
         </div>
       )}
 
-      {/* Purple circular button for tourism bar */}
       {isTourism && !showTourismBar && (
         <button
           ref={tourismButtonRef}
-          type="button"
+          type="button'
           onClick={() => setIsTourismBarOpen(true)}
           style={{
             position: 'absolute',
@@ -1674,9 +1616,8 @@ function Baje() {
         </button>
       )}
 
-      {/* Input section */}
       <div
-        className="input-section"
+        className="input-section'
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -1688,7 +1629,7 @@ function Baje() {
         }}
       >
         <textarea
-          className="input-field"
+          className="input-field'
           rows={2}
           placeholder={`Ask me about ${selectedCountry.name}...`}
           value={inputValue}
@@ -1698,17 +1639,16 @@ function Baje() {
           style={{ flexGrow: 1, marginRight: '10px' }}
         />
 
-        {/* Agent Picker */}
         <div
-          className="agent-menu-container"
+          className="agent-menu-container'
           style={{ position: 'relative', marginRight: '10px' }}
           onMouseEnter={() => setIsAgentMenuOpen(true)}
           onMouseLeave={() => setIsAgentMenuOpen(false)}
         >
           <button
-            className="agent-button"
-            type="button"
-            aria-haspopup="menu"
+            className="agent-button'
+            type="button'
+            aria-haspopup="menu'
             aria-expanded={isAgentMenuOpen}
             title={`Agent: ${activeAgent}`}
           >
@@ -1717,14 +1657,14 @@ function Baje() {
 
           <div
             className={`agent-menu ${isAgentMenuOpen ? 'open' : ''}`}
-            role="menu"
+            role="menu'
             aria-label="Choose agent"
           >
             {['Main', 'Tourism'].map((agent) => (
               <button
                 key={agent}
                 className={`agent-item ${activeAgent === agent ? 'active' : ''}`}
-                role="menuitem"
+                role="menuitem'
                 onClick={() => {
                   setActiveAgent(agent);
                   setAgentIcon(agent === 'Main' ? '🤖' : '🏖️');
@@ -1742,9 +1682,8 @@ function Baje() {
           </div>
         </div>
 
-        {/* Send button */}
         <button
-          className="submit-button"
+          className="submit-button'
           onClick={handleSendMessage}
           disabled={isLoading || !inputValue.trim()}
           style={{
@@ -1824,6 +1763,15 @@ function Baje() {
           .hamburger-button { margin-left: auto; }
           .nav-card { width: 100%; max-width: 450px; right: -450px; border-radius: 0; }
           .nav-card.nav-card-open { right: 0; }
+        }
+        @media (max-width: 768px) {
+          .agent-menu.open {
+            position: absolute;
+            right: 70px;
+            bottom: 90px;
+            z-index: 2000;
+            transform: none;
+          }
         }
       `}</style>
     </div>
