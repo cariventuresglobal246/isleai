@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from './supabaseClient'; // Import the singleton instance
 import isleImage from '../isle4.png';
-
-const supabase = createClient(
-  'https://lgurtucciqvwgjaphdqp.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndXJ0dWNjaXF2d2dqYXBoZHFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjk2MzgzNTAsImV4cCI6MjA0NTIxNDM1MH0.I1ajlHp5b4pGL-NQzzvcVdznoiyIvps49Ws5GZHSXzk'
-);
 
 const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState('');
@@ -16,19 +11,34 @@ const ResetPassword = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setMessage('Please enter your new password.');
+    // 1. Check if session already exists (link might have auto-logged user in)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setMessage('Session verified. Please enter your new password.');
       }
     });
 
+    // 2. Listen for auth changes (specifically recovery)
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setMessage('Recovery mode. Please enter your new password.');
+      }
+      if (event === 'SIGNED_IN') {
+        // Clear errors if they successfully established a session via the link
+        setError(null);
+      }
+    });
+
+    // 3. Check URL hash manually as a fallback
     const url = new URL(window.location.href);
     if (url.hash.includes('type=recovery')) {
       setMessage('Please enter your new password.');
     }
 
     return () => {
-      authListener.subscription.unsubscribe();
+      if (authListener && authListener.subscription) {
+        authListener.subscription.unsubscribe();
+      }
     };
   }, []);
 
@@ -45,6 +55,8 @@ const ResetPassword = () => {
     }
 
     try {
+      // Update the user. Because we use the shared 'supabase' client, 
+      // it has the session token from the URL/LocalStorage.
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       });
@@ -54,6 +66,10 @@ const ResetPassword = () => {
       }
 
       setMessage('Password updated successfully! Redirecting to login...');
+      
+      // Optional: Sign out to force clean login with new password
+      await supabase.auth.signOut();
+
       setTimeout(() => navigate('/login'), 2000);
     } catch (error) {
       setError(error.message || 'Failed to update password');
