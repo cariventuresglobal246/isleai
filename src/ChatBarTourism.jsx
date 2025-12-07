@@ -231,11 +231,10 @@ export default function ChatBarTourism({
             {onboardingData?.wantBucket ? 'Active' : 'Off'}
           </div>
         </div>
-
-        <div style={{ ...S.panel, marginTop: 10 }}>
+        
+{/* <div style={{ ...S.panel, marginTop: 10 }}>
           <h3 style={S.h3}>Generates Tips</h3>
           
-          {/* Static Tip Generation List (Restored) */}
           <div style={S.chipRow} aria-label="Tip categories">
             <span style={S.chip}><i className="fa-solid fa-utensils"></i> Food</span>
             <span style={S.chip}><i className="fa-solid fa-masks-theater"></i> Entertain.</span>
@@ -245,10 +244,12 @@ export default function ChatBarTourism({
           </div>
 
           <div style={{ display: 'grid', gap: 6 }}>
-            {/* Generate Button */}
             <button type="button" style={S.cta}>
               <i className="fa-solid fa-wand-magic-sparkles"></i> Generate
             </button>
+          </div>
+      </div>
+      */}
 
             {/* Facts button */}
             <button
