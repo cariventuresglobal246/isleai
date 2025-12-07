@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-// FIX: Import the shared client instance. Do not call createClient() here.
+// CHANGE 1: Import the shared client. DO NOT use createClient() here.
 import { supabase } from './supabaseClient'; 
 import isleImage from '../isle4.png';
 
@@ -12,16 +12,18 @@ const ResetPassword = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // 1. Check if the URL has the recovery token (Supabase handles parsing automatically)
-    // We listen to the state change to confirm the session is valid.
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth Event:", event);
-      
+    // Check session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setMessage('Session verified. Please enter your new password.');
+      }
+    });
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
-        setMessage('Recovery mode active. Please enter your new password.');
-      } else if (event === 'SIGNED_IN') {
-        // The link essentially logs the user in, so SIGNED_IN is also a valid state for reset
-        setMessage('Session verified. Please update your password.');
+        setMessage('Please enter your new password.');
+      }
+      if (event === 'SIGNED_IN') {
         setError(null);
       }
     });
@@ -46,8 +48,6 @@ const ResetPassword = () => {
     }
 
     try {
-      // Because we use the shared 'supabase' client, it correctly sees the 
-      // session established by the email link.
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       });
@@ -56,13 +56,13 @@ const ResetPassword = () => {
 
       setMessage('Password updated successfully! Redirecting to login...');
       
-      // Best Practice: Sign out to force a clean login with the new credentials
+      // CHANGE 2: Force sign out. This prevents the "Recovery" session from sticking around.
       await supabase.auth.signOut();
-      
+
       setTimeout(() => navigate('/login'), 2000);
     } catch (error) {
+      setError(error.message || 'Failed to update password');
       console.error('Password update error:', error);
-      setError(error.message || 'Failed to update password. Session may have expired.');
     } finally {
       setIsLoading(false);
     }
@@ -73,11 +73,11 @@ const ResetPassword = () => {
       <style jsx>{`
         body {
             background: var(--bg-gradient);
-            --bg-gradient: linear-gradient(135deg, #000000, #1E90FF);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+         --bg-gradient: linear-gradient(135deg, #000000, #1E90FF);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 100vh;
         }
         .mainContainer {
           position: relative;
