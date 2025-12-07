@@ -1,12 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { createClient } from '@supabase/supabase-js';
+// CHANGE: Import shared client
+import { supabase } from './supabaseClient';
 import isleImage from '../isle4.png';
-
-const supabase = createClient(
-  'https://lgurtucciqvwgjaphdqp.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndXJ0dWNjaXF2d2dqYXBoZHFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjk2MzgzNTAsImV4cCI6MjA0NTIxNDM1MH0.I1ajlHp5b4pGL-NQzzvcVdznoiyIvps49Ws5GZHSXzk'
-);
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -38,10 +34,12 @@ const ForgotPassword = () => {
       setIsLoading(false);
     }
   };
-
+  
+  // ... The rest of the return block remains exactly the same as your file ...
   return (
     <>
       <style jsx>{`
+        /* ... styles ... */
         body {
             background: var(--bg-gradient);
          --bg-gradient: linear-gradient(135deg, #000000, #1E90FF);
@@ -50,7 +48,8 @@ const ForgotPassword = () => {
           align-items: center;
           min-height: 100vh;
         }
-        .mainContainer {
+        /* ... include all your existing css here ... */
+         .mainContainer {
           position: relative;
           width: 700px;
           height: 840px;
