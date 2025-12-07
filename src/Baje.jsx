@@ -323,6 +323,8 @@ function Baje() {
   }, [messages, chatSessionId]);
 
   /* ------------------------ Tips timer ONLY ------------------------ */
+  // COMMENTED OUT TO DISABLE AUTO-TIPS
+  /*
   useEffect(() => {
     const initializeTimer = (key, interval, callback) => {
       const startTime = localStorage.getItem(key);
@@ -377,6 +379,7 @@ function Baje() {
       };
     }
   }, [csrfToken, selectedCountry.name, isFactsCardOpen, isTipCardOpen]);
+  */
 
   /* ----------------------------- Scroll down ----------------------------- */
   useEffect(() => {
@@ -1551,7 +1554,7 @@ function Baje() {
         <div style={{ color: '#008000', fontSize: '14px' }}>{fact.answers}</div>
       </div>
 
-      {/* Tip Card */}
+      {/* Tip Card - COMMENTED OUT
       <div
         className="tip-card"
         style={{
@@ -1597,6 +1600,7 @@ function Baje() {
         </div>
         <div style={{ fontSize: '14px' }}>{currentTip.tip_text}</div>
       </div>
+      */}
 
       {/* Tourism sidebar inside container, above input (LEFT side) */}
       {showTourismBar && (
