@@ -231,8 +231,10 @@ export default function ChatBarTourism({
             {onboardingData?.wantBucket ? 'Active' : 'Off'}
           </div>
         </div>
-        
-{/* <div style={{ ...S.panel, marginTop: 10 }}>
+
+        {/* GENERATE TIPS SECTION COMMENTED OUT START */}
+        {/*
+        <div style={{ ...S.panel, marginTop: 10 }}>
           <h3 style={S.h3}>Generates Tips</h3>
           
           <div style={S.chipRow} aria-label="Tip categories">
@@ -247,11 +249,7 @@ export default function ChatBarTourism({
             <button type="button" style={S.cta}>
               <i className="fa-solid fa-wand-magic-sparkles"></i> Generate
             </button>
-          </div>
-      </div>
-      */}
 
-            {/* Facts button */}
             <button
               type="button"
               style={S.ctaSecondary}
@@ -261,6 +259,8 @@ export default function ChatBarTourism({
             </button>
           </div>
         </div>
+        */}
+        {/* GENERATE TIPS SECTION COMMENTED OUT END */}
       </div>
 
       <div style={S.panel}>
