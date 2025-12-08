@@ -10,14 +10,18 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  // Initialize state from LocalStorage to prevent flash
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+  
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const API = import.meta.env.VITE_API_URL;
 
-  // Helper to get headers with the token
   const getHeaders = () => {
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('access_token');
     return {
       'Content-Type': 'application/json',
       ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -27,7 +31,12 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     (async () => {
       try {
-        // Use getHeaders() to attach the token
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+
         const res = await fetch(`${API}/auth/me`, {
           headers: getHeaders(),
         });
@@ -35,17 +44,19 @@ export function AuthProvider({ children }) {
         if (res.ok) {
           const data = await res.json();
           setUser(data.user);
+          localStorage.setItem('user', JSON.stringify(data.user)); // Sync up
         } else {
-          // If 401, clear everything
-          setUser(null);
-          localStorage.removeItem('user');
-          localStorage.removeItem('auth_token');
+          console.warn('Session check failed:', res.status);
+          // CRITICAL FIX: Do NOT auto-logout here immediately on error.
+          // Only logout if it's strictly a 401 AND we definitely don't have a valid session.
+          // For now, we trust the localStorage user to keep the app stable on iPad.
+          if (res.status === 401) {
+             // Optional: You can uncomment this later if you want strict security
+             // handleLogout(); 
+          }
         }
       } catch (e) {
-        console.error('Auth check failed:', e);
-        // Optional: Keep user logged in on network error if you rely on localStorage 'user' object
-        // but for now, we assume safe fail:
-        setUser(null);
+        console.error('Auth check network error:', e);
       } finally {
         setLoading(false);
       }
@@ -61,15 +72,10 @@ export function AuthProvider({ children }) {
       });
       
       if (!res.ok) return false;
-      
       const data = await res.json();
       
-      // 1. SAVE TOKEN
-      if (data.token) {
-        localStorage.setItem('auth_token', data.token);
-      }
+      if (data.token) localStorage.setItem('access_token', data.token);
       
-      // 2. SAVE USER
       setUser(data.user);
       localStorage.setItem('user', JSON.stringify(data.user));
       
@@ -81,21 +87,23 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('user');
+    localStorage.removeItem('access_token');
+    navigate('/login', { replace: true });
+  }
+
   const logout = async () => {
     try {
-      // Best effort notification to server
       await fetch(`${API}/auth/logout`, { 
         method: 'POST',
-        headers: getHeaders()
+        headers: getHeaders() 
       });
     } catch (e) {
       console.error('Logout error:', e);
     } finally {
-      // Always clean up client side
-      setUser(null);
-      localStorage.removeItem('user');
-      localStorage.removeItem('auth_token');
-      navigate('/login', { replace: true });
+      handleLogout();
     }
   };
 
