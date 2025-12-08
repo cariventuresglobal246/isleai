@@ -112,17 +112,23 @@ function Baje() {
   const MAX_FILE_SIZE = 10 * 1024 * 1024;
   const TIP_TIMER_KEY = 'tipTimerStart';
 
-  /* ---------------------- Axios CSRF interceptor ---------------------- */
+  /* ---------------------- Axios CSRF + AUTH interceptor ---------------------- */
   useEffect(() => {
     const reqId = api.interceptors.request.use((cfg) => {
+      // ✅ Always attach Supabase auth token if present
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        cfg.headers['Authorization'] = `Bearer ${token}`;
+      }
       if (csrfToken) cfg.headers['X-CSRF-Token'] = csrfToken;
       return cfg;
     });
     const resId = api.interceptors.response.use(
       (r) => r,
       (err) => {
+        // ❌ Do NOT auto-redirect on 401 (this was causing flash + bounce)
         if (err?.response?.status === 401) {
-          navigate('/login', { replace: true });
+          console.warn('API 401 Unauthorized:', err?.config?.url || '');
         }
         return Promise.reject(err);
       }
@@ -165,7 +171,10 @@ function Baje() {
         setUserId(res.data.id);
         setAvatarImage(res.data.avatarUrl || null);
       } catch (err) {
-        if (err.response?.status === 401) navigate('/login', { replace: true });
+        if (err.response?.status === 401) {
+          console.warn('Profile 401 Unauthorized');
+          // No auto redirect here; AuthContext / routing will handle auth state
+        }
       } finally {
         fetchingProfileRef.current = false;
       }
@@ -323,8 +332,6 @@ function Baje() {
   }, [messages, chatSessionId]);
 
   /* ------------------------ Tips timer ONLY ------------------------ */
-  // COMMENTED OUT TO DISABLE AUTO-TIPS
-  /*
   useEffect(() => {
     const initializeTimer = (key, interval, callback) => {
       const startTime = localStorage.getItem(key);
@@ -379,7 +386,6 @@ function Baje() {
       };
     }
   }, [csrfToken, selectedCountry.name, isFactsCardOpen, isTipCardOpen]);
-  */
 
   /* ----------------------------- Scroll down ----------------------------- */
   useEffect(() => {
@@ -530,7 +536,9 @@ function Baje() {
   };
 
   const handleLogout = () => {
+    // Clear both legacy and current auth token keys
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('authToken');
     navigate('/login', { replace: true });
   };
 
@@ -1079,7 +1087,7 @@ function Baje() {
                 Yes, please
               </button>
               <button
-                type="button"
+                type="button'
                 disabled={!isCurrent}
                 onClick={() => finishOnboarding(false)}
                 style={{
@@ -1138,7 +1146,7 @@ function Baje() {
               }}
               loading="lazy"
               allowFullScreen
-              referrerPolicy="no-referrer-when-downgrade"
+              referrerPolicy="no-referrer-when-downgrade'
               title={msg.title || 'Location map'}
             />
           </div>
@@ -1231,12 +1239,12 @@ function Baje() {
           >
             <VariableProximity
               label={msg.content}
-              className="variable-proximity-demo"
+              className="variable-proximity-demo'
               fromFontVariationSettings="'wght' 400, 'opsz' 9"
               toFontVariationSettings="'wght' 1000, 'opsz' 40"
               containerRef={messagesContainerRef}
               radius={100}
-              falloff="linear"
+              falloff="linear'
             />
           </div>
         </div>
@@ -1257,7 +1265,7 @@ function Baje() {
       <div className="chat-header">
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div
-            className="ai-avatar"
+            className="ai-avatar'
             style={{
               ...(avatarImage && {
                 backgroundImage: `url(${avatarImage})`,
@@ -1267,12 +1275,12 @@ function Baje() {
           >
             {!avatarImage && 'ISLE'}
           </div>
-          <div className="ai-info">
-            <div className="ai-name">ISLE</div>
+          <div className="ai-info'>
+            <div className="ai-name'>ISLE</div>
             <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
-              <div className="ai-status">Your {selectedCountry.name} Guide</div>
+              <div className="ai-status'>Your {selectedCountry.name} Guide</div>
               <div
-                className="barbados-flag"
+                className="barbados-flag'
                 onClick={toggleCountryMenu}
                 style={{
                   width: '20px',
@@ -1287,13 +1295,13 @@ function Baje() {
           </div>
         </div>
 
-        <div className="header-buttons">
+        <div className="header-buttons'>
           <div
-            className="bell-container"
+            className="bell-container'
             style={{ display: 'flex', marginRight: '8px', position: 'relative' }}
           >
             <button
-              className="notification-button"
+              className="notification-button'
               onClick={() => {
                 if (chatSessionId && usageStartTime) {
                   const durationSeconds = Math.round(
@@ -1327,7 +1335,7 @@ function Baje() {
               🔔
             </button>
             <span
-              className="badge"
+              className="badge'
               style={{
                 position: 'absolute',
                 top: '-8px',
@@ -1360,9 +1368,9 @@ function Baje() {
             className={`hamburger-button ${isNavOpen ? 'active' : ''}`}
             onClick={toggleNav}
           >
-            <span className="hamburger-button-span"></span>
-            <span className="hamburger-button-span"></span>
-            <span className="hamburger-button-span"></span>
+            <span className="hamburger-button-span'></span>
+            <span className="hamburger-button-span'></span>
+            <span className="hamburger-button-span'></span>
           </button>
         </div>
       </div>
@@ -1375,12 +1383,12 @@ function Baje() {
         }`}
       >
         <div className={`nav-card ${isNavOpen ? 'nav-card-open' : ''}`}>
-          <ul className="nav-list">
+          <ul className="nav-list'>
             {navItems.map((item) => (
-              <li key={item.name} className="nav-item">
+              <li key={item.name} className="nav-item'>
                 <Link
                   to={item.path}
-                  className="nav-item-a"
+                  className="nav-item-a'
                   onClick={(e) => {
                     if (item.onClick) {
                       item.onClick(e);
@@ -1406,7 +1414,7 @@ function Baje() {
       {/* Chat messages */}
       <div
         ref={messagesContainerRef}
-        className="chat-messages"
+        className="chat-messages'
         style={{
           marginLeft: 0,
           transition: 'margin-left .28s ease',
@@ -1426,7 +1434,7 @@ function Baje() {
             // Parent wrapper (not visible)
             <div
               key={msg.id}
-              className="message-wrapper"
+              className="message-wrapper'
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -1435,7 +1443,7 @@ function Baje() {
             >
               {/* Actual bubble/card */}
               <div
-                className="message"
+                className="message'
                 style={{
                   alignSelf: 'flex-start', // user + assistant both left
                 }}
@@ -1446,7 +1454,7 @@ function Baje() {
               {/* Variable Proximity toggle button as sibling, bottom-left */}
               {isAssistantTourismReply && (
                 <button
-                  type="button"
+                  type="button'
                   onClick={() =>
                     setProximityToggles((prev) => ({
                       ...prev,
@@ -1485,7 +1493,7 @@ function Baje() {
           );
         })}
         {isLoading && (
-          <div className="message">
+          <div className="message'>
             <div style={{ display: 'flex', gap: '5px' }}>
               {[0, 1, 2].map((i) => (
                 <div
@@ -1508,7 +1516,7 @@ function Baje() {
 
       {/* Facts Card */}
       <div
-        className="facts-card"
+        className="facts-card'
         style={{
           position: 'fixed',
           top: '50%',
@@ -1526,7 +1534,7 @@ function Baje() {
         }}
       >
         <button
-          className="facts-card-close"
+          className="facts-card-close'
           onClick={() => setIsFactsCardOpen(false)}
           style={{
             position: 'absolute',
@@ -1554,9 +1562,9 @@ function Baje() {
         <div style={{ color: '#008000', fontSize: '14px' }}>{fact.answers}</div>
       </div>
 
-      {/* Tip Card - COMMENTED OUT
+      {/* Tip Card */}
       <div
-        className="tip-card"
+        className="tip-card'
         style={{
           position: 'fixed',
           top: '50%',
@@ -1574,7 +1582,7 @@ function Baje() {
         }}
       >
         <button
-          className="tip-card-close"
+          className="tip-card-close'
           onClick={() => setIsTipCardOpen(false)}
           style={{
             position: 'absolute',
@@ -1600,7 +1608,6 @@ function Baje() {
         </div>
         <div style={{ fontSize: '14px' }}>{currentTip.tip_text}</div>
       </div>
-      */}
 
       {/* Tourism sidebar inside container, above input (LEFT side) */}
       {showTourismBar && (
@@ -1615,7 +1622,7 @@ function Baje() {
           }}
         >
           <button
-            type="button"
+            type="button'
             onClick={() => setIsTourismBarOpen(false)}
             style={{
               position: 'absolute',
@@ -1651,7 +1658,7 @@ function Baje() {
       {isTourism && !showTourismBar && (
         <button
           ref={tourismButtonRef}
-          type="button"
+          type="button'
           onClick={() => setIsTourismBarOpen(true)}
           style={{
             position: 'absolute',
@@ -1680,7 +1687,7 @@ function Baje() {
 
       {/* Input section */}
       <div
-        className="input-section"
+        className="input-section'
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -1692,7 +1699,7 @@ function Baje() {
         }}
       >
         <textarea
-          className="input-field"
+          className="input-field'
           rows={2}
           placeholder={`Ask me about ${selectedCountry.name}...`}
           value={inputValue}
@@ -1704,14 +1711,14 @@ function Baje() {
 
         {/* Agent Picker */}
         <div
-          className="agent-menu-container"
+          className="agent-menu-container'
           style={{ position: 'relative', marginRight: '10px' }}
           onMouseEnter={() => setIsAgentMenuOpen(true)}
           onMouseLeave={() => setIsAgentMenuOpen(false)}
         >
           <button
-            className="agent-button"
-            type="button"
+            className="agent-button'
+            type="button'
             onClick={() => setIsAgentMenuOpen((prev) => !prev)} // Added toggle here for mobile touch support
             aria-haspopup="menu"
             aria-expanded={isAgentMenuOpen}
@@ -1739,7 +1746,7 @@ function Baje() {
               <button
                 key={agent}
                 className={`agent-item ${activeAgent === agent ? 'active' : ''}`}
-                role="menuitem"
+                role="menuitem'
                 onClick={() => {
                   setActiveAgent(agent);
                   setAgentIcon(agent === 'Main' ? '🤖' : '🏖️');
@@ -1759,7 +1766,7 @@ function Baje() {
 
         {/* Send button */}
         <button
-          className="submit-button"
+          className="submit-button'
           onClick={handleSendMessage}
           disabled={isLoading || !inputValue.trim()}
           style={{
@@ -1785,16 +1792,16 @@ function Baje() {
           0%, 80%, 100% { transform: translateY(0); }
           40% { transform: translateY(-6px); }
         }
-        .baje-container { position: relative; z-index: 100; }
-        .chat-header { position: sticky; top: 0; z-index: 101; }
+        .baje-container { position: relative; zIndex: 100; }
+        .chat-header { position: sticky; top: 0; zIndex: 101; }
         .nav-overlay {
           position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-          background: rgba(0, 0, 0, 0); z-index: 99; transition: background 0.3s ease; visibility: hidden;
+          background: rgba(0, 0, 0, 0); zIndex: 99; transition: background 0.3s ease; visibility: hidden;
         }
         .nav-overlay.active { background: rgba(0, 0, 0, 0.5); visibility: visible; }
         .nav-card {
           position: fixed; top: 0; right: -300px; width: 250px; height: 100vh;
-          background: rgba(0, 0, 0, 0.9); padding: 20px; transition: right 0.3s ease; z-index: 1000;
+          background: rgba(0, 0, 0, 0.9); padding: 20px; transition: right 0.3s ease; zIndex: 1000;
           visibility: hidden; border-radius: 10px; box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.35);
           display: flex; flex-direction: column; align-items: center;
         }
