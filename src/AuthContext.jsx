@@ -4,14 +4,16 @@ import { useNavigate } from 'react-router-dom';
 
 export const AuthContext = createContext(null);
 
+// Stable hook export (never flip this to default or change its name)
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within <AuthProvider>');
   return ctx;
 }
 
+// Stable component export (keep as named export)
 export function AuthProvider({ children }) {
-  // ✅ Seed initial user from localStorage to avoid "null → real user" flicker
+  // ✅ Seed initial user from localStorage to reduce flash/bounce
   const [user, setUser] = useState(() => {
     try {
       const stored = localStorage.getItem('user');
@@ -30,6 +32,7 @@ export function AuthProvider({ children }) {
         const token = localStorage.getItem('authToken');
         const headers = { 'Content-Type': 'application/json' };
 
+        // ✅ Use Supabase JWT if we have it (fixes Safari / cross-site cookie issues)
         if (token) {
           headers['Authorization'] = `Bearer ${token}`;
         }
@@ -44,13 +47,13 @@ export function AuthProvider({ children }) {
           setUser(data.user);
           localStorage.setItem('user', JSON.stringify(data.user));
         } else {
-          // 🧊 Important: don't immediately wipe user on 401.
-          // This is what caused the bounce before.
+          // 🔸 IMPORTANT: Do NOT auto-wipe user on 401.
+          // Safari / cookie quirks can make /auth/me fail even when we have a valid local session.
           console.warn('auth/me failed with status', res.status);
         }
       } catch (e) {
         console.error('Auth check failed:', e);
-        // On network error, keep whatever we have in localStorage
+        // On network error, keep local user if present
       } finally {
         setLoading(false);
       }
@@ -69,12 +72,14 @@ export function AuthProvider({ children }) {
       if (!res.ok) return false;
 
       const data = await res.json();
-      if (!data?.user || !data?.token) return false;
+      if (!data?.user) return false;
 
-      // ✅ Store user + token for future /auth/me + /api/* calls
+      // ✅ Store user + token from backend
       setUser(data.user);
       localStorage.setItem('user', JSON.stringify(data.user));
-      localStorage.setItem('authToken', data.token);
+      if (data.token) {
+        localStorage.setItem('authToken', data.token);
+      }
 
       navigate('/baje', { replace: true });
       return true;
