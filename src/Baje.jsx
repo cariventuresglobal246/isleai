@@ -114,29 +114,40 @@ function Baje() {
 
   /* ---------------------- Axios CSRF + AUTH interceptor ---------------------- */
   useEffect(() => {
-    const reqId = api.interceptors.request.use((cfg) => {
-      const token = localStorage.getItem('authToken');
-      if (!cfg.headers) cfg.headers = {};
-      if (token) {
-        cfg.headers['Authorization'] = `Bearer ${token}`;
-      }
-      if (csrfToken) cfg.headers['X-CSRF-Token'] = csrfToken;
-      return cfg;
-    });
-    const resId = api.interceptors.response.use(
-      (r) => r,
-      (err) => {
-        if (err?.response?.status === 401) {
-          navigate('/login', { replace: true });
+    const reqId = api.interceptors.request.use(
+      (cfg) => {
+        const token = localStorage.getItem('authToken');
+        if (!cfg.headers) cfg.headers = {};
+        if (token) {
+          cfg.headers['Authorization'] = `Bearer ${token}`;
         }
-        return Promise.reject(err);
+        if (csrfToken) cfg.headers['X-CSRF-Token'] = csrfToken;
+        return cfg;
+      },
+      (error) => Promise.reject(error)
+    );
+
+    const resId = api.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error?.response?.status === 401) {
+          // IMPORTANT: do NOT navigate or clear localStorage here.
+          // Safari / cross-site quirks can cause transient 401s and we
+          // don't want a flash back to /login.
+          console.warn(
+            'API returned 401 – leaving user on current page to avoid flash/bounce.',
+            error.response?.data
+          );
+        }
+        return Promise.reject(error);
       }
     );
+
     return () => {
       api.interceptors.request.eject(reqId);
       api.interceptors.response.eject(resId);
     };
-  }, [csrfToken, navigate]);
+  }, [csrfToken]);
 
   /* -------------------------- CSRF on mount -------------------------- */
   useEffect(() => {
@@ -171,16 +182,20 @@ function Baje() {
         setAvatarImage(res.data.avatarUrl || null);
       } catch (err) {
         if (err.response?.status === 401) {
-          localStorage.removeItem('user');
-          localStorage.removeItem('authToken');
-          navigate('/login', { replace: true });
+          console.warn(
+            'Profile 401 – likely not logged in yet or token not accepted yet. Skipping redirect to avoid Safari flash/bounce.',
+            err.response?.data
+          );
+          // Do NOT navigate or clear tokens here – just treat as "no profile yet".
+        } else {
+          console.error('Error fetching profile:', err?.response?.data || err.message);
         }
       } finally {
         fetchingProfileRef.current = false;
       }
     };
     if (csrfToken) fetchUserProfile();
-  }, [csrfToken, navigate]);
+  }, [csrfToken]);
 
   /* -------------------- Fetch Onboarding Status (NEW) -------------------- */
   useEffect(() => {
@@ -835,7 +850,7 @@ function Baje() {
                     width: '100%',
                     padding: '6px 8px',
                     borderRadius: '8px',
-                    border: '1px solid #d1d5db', 
+                    border: '1px solid #d1d5db',
                   }}
                 />
               </div>
