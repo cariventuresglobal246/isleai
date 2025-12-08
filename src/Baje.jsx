@@ -835,7 +835,7 @@ function Baje() {
                     width: '100%',
                     padding: '6px 8px',
                     borderRadius: '8px',
-                    border: '1px solid '#d1d5db',
+                    border: '1px solid #d1d5db', 
                   }}
                 />
               </div>
@@ -857,7 +857,7 @@ function Baje() {
                     width: '100%',
                     padding: '6px 8px',
                     borderRadius: '8px',
-                    border: '1px solid '#d1d5db',
+                    border: '1px solid #d1d5db',
                   }}
                 />
               </div>
@@ -927,7 +927,7 @@ function Baje() {
                 width: '100%',
                 padding: '8px',
                 borderRadius: '8px',
-                border: '1px solid '#d1d5db',
+                border: '1px solid #d1d5db',
                 marginBottom: 10,
               }}
             >
@@ -1027,7 +1027,7 @@ function Baje() {
                   style={{
                     padding: '6px 10px',
                     borderRadius: '999px',
-                    border: isChecked(opt) ? '1px solid '#1E90FF' : '1px solid '#d1d5db',
+                    border: isChecked(opt) ? '1px solid '#1E90FF' : '1px solid #d1d5db',
                     background: isChecked(opt) ? '#1E90FF' : '#ffffff',
                     color: isChecked(opt) ? '#ffffff' : '#111827',
                     fontSize: '13px',
@@ -1093,7 +1093,7 @@ function Baje() {
                   flex: 1,
                   background: '#ffffff',
                   color: '#1F2933',
-                  border: '1px solid '#d1d5db',
+                  border: '1px solid #d1d5db',
                   borderRadius: '999px',
                   padding: '8px 0',
                   cursor: !isCurrent ? 'not-allowed' : 'pointer',
@@ -1466,7 +1466,7 @@ function Baje() {
                     fontSize: '13px',
                     padding: '4px 6px',
                     borderRadius: '999px',
-                    border: '1px solid '#d1d5db',
+                    border: '1px solid #d1d5db',
                     background: '#ffffff',
                     cursor: 'pointer',
                     display: 'inline-flex',
