@@ -21,12 +21,12 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     (async () => {
       try {
-        const token = localStorage.getItem('authToken');
-        const headers = { 'Content-Type': 'application/json' };
+        const storedUserJson = localStorage.getItem('user');
+        const storedToken = localStorage.getItem('authToken');
 
-        // ✅ Send Authorization header if we have a token (fixes iOS cookie issues)
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
+        const headers = { 'Content-Type': 'application/json' };
+        if (storedToken) {
+          headers['Authorization'] = `Bearer ${storedToken}`;
         }
 
         const res = await fetch(`${API}/auth/me`, {
@@ -37,16 +37,42 @@ export function AuthProvider({ children }) {
         if (res.ok) {
           const data = await res.json();
           setUser(data.user);
+          // keep local copy in sync
+          localStorage.setItem('user', JSON.stringify(data.user));
         } else {
-          setUser(null);
-          localStorage.removeItem('user');
-          localStorage.removeItem('authToken');
+          // ❗ iOS / cross-site cookies / header issues can cause this.
+          // If we *do* have a stored user + token, trust that instead of logging out.
+          if (storedUserJson && storedToken) {
+            try {
+              const parsed = JSON.parse(storedUserJson);
+              setUser(parsed);
+            } catch {
+              setUser(null);
+              localStorage.removeItem('user');
+              localStorage.removeItem('authToken');
+            }
+          } else {
+            setUser(null);
+            localStorage.removeItem('user');
+            localStorage.removeItem('authToken');
+          }
         }
       } catch (e) {
         console.error('Auth check failed:', e);
-        setUser(null);
-        localStorage.removeItem('user');
-        localStorage.removeItem('authToken');
+        // On network errors, still try to restore from localStorage
+        const storedUserJson = localStorage.getItem('user');
+        if (storedUserJson) {
+          try {
+            const parsed = JSON.parse(storedUserJson);
+            setUser(parsed);
+          } catch {
+            setUser(null);
+            localStorage.removeItem('user');
+            localStorage.removeItem('authToken');
+          }
+        } else {
+          setUser(null);
+        }
       } finally {
         setLoading(false);
       }
