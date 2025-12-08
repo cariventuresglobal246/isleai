@@ -1146,7 +1146,7 @@ function Baje() {
               }}
               loading="lazy"
               allowFullScreen
-              referrerPolicy="no-referrer-when-downgrade'
+              referrerPolicy="no-referrer-when-downgrade"
               title={msg.title || 'Location map'}
             />
           </div>
