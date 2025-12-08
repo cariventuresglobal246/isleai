@@ -115,8 +115,8 @@ function Baje() {
   /* ---------------------- Axios CSRF + AUTH interceptor ---------------------- */
   useEffect(() => {
     const reqId = api.interceptors.request.use((cfg) => {
-      // ✅ Always attach Supabase auth token if present
       const token = localStorage.getItem('authToken');
+      if (!cfg.headers) cfg.headers = {};
       if (token) {
         cfg.headers['Authorization'] = `Bearer ${token}`;
       }
@@ -126,9 +126,8 @@ function Baje() {
     const resId = api.interceptors.response.use(
       (r) => r,
       (err) => {
-        // ❌ Do NOT auto-redirect on 401 (this was causing flash + bounce)
         if (err?.response?.status === 401) {
-          console.warn('API 401 Unauthorized:', err?.config?.url || '');
+          navigate('/login', { replace: true });
         }
         return Promise.reject(err);
       }
@@ -172,8 +171,9 @@ function Baje() {
         setAvatarImage(res.data.avatarUrl || null);
       } catch (err) {
         if (err.response?.status === 401) {
-          console.warn('Profile 401 Unauthorized');
-          // No auto redirect here; AuthContext / routing will handle auth state
+          localStorage.removeItem('user');
+          localStorage.removeItem('authToken');
+          navigate('/login', { replace: true });
         }
       } finally {
         fetchingProfileRef.current = false;
@@ -536,9 +536,8 @@ function Baje() {
   };
 
   const handleLogout = () => {
-    // Clear both legacy and current auth token keys
-    localStorage.removeItem('auth_token');
     localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
     navigate('/login', { replace: true });
   };
 
@@ -775,18 +774,18 @@ function Baje() {
                 width: '100%',
                 padding: '8px',
                 borderRadius: '8px',
-                border: '1px solid #d1d5db',
+                border: '1px solid '#d1d5db',
                 marginBottom: 12,
               }}
             >
-              <option value="">Select your budget</option>
-              <option value="$200-5000">$200–5,000</option>
-              <option value="$6000">$6,000</option>
-              <option value="$10,000">$10,000</option>
-              <option value="Other">Other</option>
+              <option value=''>Select your budget</option>
+              <option value='$200-5000'>$200–5,000</option>
+              <option value='$6000'>$6,000</option>
+              <option value='$10,000'>$10,000</option>
+              <option value='Other'>Other</option>
             </select>
             <button
-              type="button"
+              type='button'
               disabled={!isCurrent || !onboardingData.budget}
               onClick={() => goToOnboardingStep(2)}
               style={{
@@ -823,7 +822,7 @@ function Baje() {
                   Start date
                 </label>
                 <input
-                  type="date"
+                  type='date'
                   disabled={!isCurrent}
                   value={onboardingData.startDate}
                   onChange={(e) =>
@@ -836,7 +835,7 @@ function Baje() {
                     width: '100%',
                     padding: '6px 8px',
                     borderRadius: '8px',
-                    border: '1px solid #d1d5db',
+                    border: '1px solid '#d1d5db',
                   }}
                 />
               </div>
@@ -845,7 +844,7 @@ function Baje() {
                   End date
                 </label>
                 <input
-                  type="date"
+                  type='date'
                   disabled={!isCurrent}
                   value={onboardingData.endDate}
                   onChange={(e) =>
@@ -858,7 +857,7 @@ function Baje() {
                     width: '100%',
                     padding: '6px 8px',
                     borderRadius: '8px',
-                    border: '1px solid #d1d5db',
+                    border: '1px solid '#d1d5db',
                   }}
                 />
               </div>
@@ -873,7 +872,7 @@ function Baje() {
               }}
             >
               <input
-                type="checkbox"
+                type='checkbox'
                 disabled={!isCurrent}
                 checked={onboardingData.wantReminder}
                 onChange={(e) =>
@@ -886,7 +885,7 @@ function Baje() {
               Want to set an encouragement reminder?
             </label>
             <button
-              type="button"
+              type='button'
               disabled={!isCurrent || !onboardingData.startDate || !onboardingData.endDate}
               onClick={() => goToOnboardingStep(3)}
               style={{
@@ -928,11 +927,11 @@ function Baje() {
                 width: '100%',
                 padding: '8px',
                 borderRadius: '8px',
-                border: '1px solid #d1d5db',
+                border: '1px solid '#d1d5db',
                 marginBottom: 10,
               }}
             >
-              <option value="">Choose a place to stay</option>
+              <option value=''>Choose a place to stay</option>
               {BARBADOS_HOTELS.map((h) => (
                 <option
                   key={h.id}
@@ -941,15 +940,15 @@ function Baje() {
                   {h.name} — {h.priceRange} — ⭐ {h.rating}
                 </option>
               ))}
-              <option value="Not sure yet">I&apos;m not sure yet</option>
+              <option value='Not sure yet'>I&apos;m not sure yet</option>
             </select>
             <button
-              type="button"
+              type='button'
               disabled={!isCurrent}
               onClick={suggestStayOption}
               style={{
                 background: 'white',
-                border: '1px solid #1E90FF',
+                border: '1px solid '#1E90FF',
                 color: '#1E90FF',
                 borderRadius: '999px',
                 padding: '6px 12px',
@@ -972,7 +971,7 @@ function Baje() {
               </div>
             )}
             <button
-              type="button"
+              type='button'
               disabled={!isCurrent || !onboardingData.stayOption}
               onClick={() => goToOnboardingStep(4)}
               style={{
@@ -1022,13 +1021,13 @@ function Baje() {
               {interestOptions.map((opt) => (
                 <button
                   key={opt}
-                  type="button"
+                  type='button'
                   disabled={!isCurrent}
                   onClick={() => handleInterestToggle(opt)}
                   style={{
                     padding: '6px 10px',
                     borderRadius: '999px',
-                    border: isChecked(opt) ? '1px solid #1E90FF' : '1px solid #d1d5db',
+                    border: isChecked(opt) ? '1px solid '#1E90FF' : '1px solid '#d1d5db',
                     background: isChecked(opt) ? '#1E90FF' : '#ffffff',
                     color: isChecked(opt) ? '#ffffff' : '#111827',
                     fontSize: '13px',
@@ -1040,7 +1039,7 @@ function Baje() {
               ))}
             </div>
             <button
-              type="button"
+              type='button'
               disabled={!isCurrent || onboardingData.interests.length === 0}
               onClick={() => goToOnboardingStep(5)}
               style={{
@@ -1071,7 +1070,7 @@ function Baje() {
             </p>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
-                type="button"
+                type='button'
                 disabled={!isCurrent}
                 onClick={() => finishOnboarding(true)}
                 style={{
@@ -1087,14 +1086,14 @@ function Baje() {
                 Yes, please
               </button>
               <button
-                type="button'
+                type='button'
                 disabled={!isCurrent}
                 onClick={() => finishOnboarding(false)}
                 style={{
                   flex: 1,
                   background: '#ffffff',
                   color: '#1F2933',
-                  border: '1px solid #d1d5db',
+                  border: '1px solid '#d1d5db',
                   borderRadius: '999px',
                   padding: '8px 0',
                   cursor: !isCurrent ? 'not-allowed' : 'pointer',
@@ -1110,50 +1109,49 @@ function Baje() {
       return <div style={baseCardStyle}>Loading trip setup…</div>;
     }
 
- // Map card
-if (msg.type === 'map' && msg.mapEmbedUrl) {
-  return (
-    <div
-      style={{
-        background: '#ffffff',
-        borderRadius: '12px',
-        padding: '12px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-        maxWidth: '100%',
-      }}
-    >
-      {msg.title && (
-        <div style={{ fontWeight: 600, marginBottom: '8px', color: '#111827' }}>
-          {msg.title}
-        </div>
-      )}
-      {msg.content && (
-        <div style={{ fontSize: '13px', marginBottom: '8px', color: '#4b5563' }}>
-          {msg.content}
-        </div>
-      )}
-      <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%' }}>
-        <iframe
-          src={msg.mapEmbedUrl}
+    // Map card
+    if (msg.type === 'map' && msg.mapEmbedUrl) {
+      return (
+        <div
           style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            border: 0,
-            borderRadius: '8px',
+            background: '#ffffff',
+            borderRadius: '12px',
+            padding: '12px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            maxWidth: '100%',
           }}
-          loading="lazy"
-          allowFullScreen
-          referrerPolicy="no-referrer-when-downgrade"
-          title={msg.title || 'Location map'}
-        />
-      </div>
-    </div>
-  );
-}
-
+        >
+          {msg.title && (
+            <div style={{ fontWeight: 600, marginBottom: '8px', color: '#111827' }}>
+              {msg.title}
+            </div>
+          )}
+          {msg.content && (
+            <div style={{ fontSize: '13px', marginBottom: '8px', color: '#4b5563' }}>
+              {msg.content}
+            </div>
+          )}
+          <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%' }}>
+            <iframe
+              src={msg.mapEmbedUrl}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                border: 0,
+                borderRadius: '8px',
+              }}
+              loading={'lazy'}
+              allowFullScreen={true}
+              referrerPolicy={'no-referrer-when-downgrade'}
+              title={msg.title || 'Location map'}
+            />
+          </div>
+        </div>
+      );
+    }
 
     // File upload responses (if backend sends fileUrl)
     if (msg.fileUrl) {
@@ -1163,11 +1161,11 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
           {/\.(jpg|jpeg|png|gif|webp)$/i.test(msg.fileUrl) ? (
             <img
               src={msg.fileUrl}
-              alt="Uploaded"
+              alt='Uploaded'
               style={{ maxWidth: '200px', marginTop: '10px' }}
             />
           ) : (
-            <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer">
+            <a href={msg.fileUrl} target='_blank' rel='noopener noreferrer'>
               View File
             </a>
           )}
@@ -1185,7 +1183,7 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
           <div>{msg.content}</div>
           {showPlanningButton && (
             <button
-              type="button"
+              type='button'
               onClick={startOnboarding}
               style={{
                 marginTop: '10px',
@@ -1240,12 +1238,12 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
           >
             <VariableProximity
               label={msg.content}
-              className="variable-proximity-demo'
+              className='variable-proximity-demo'
               fromFontVariationSettings="'wght' 400, 'opsz' 9"
               toFontVariationSettings="'wght' 1000, 'opsz' 40"
               containerRef={messagesContainerRef}
               radius={100}
-              falloff="linear'
+              falloff='linear'
             />
           </div>
         </div>
@@ -1262,11 +1260,11 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
   };
 
   return (
-    <div className="baje-container" style={{ zIndex: 100, position: 'relative' }}>
-      <div className="chat-header">
+    <div className='baje-container' style={{ zIndex: 100, position: 'relative' }}>
+      <div className='chat-header'>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div
-            className="ai-avatar'
+            className='ai-avatar'
             style={{
               ...(avatarImage && {
                 backgroundImage: `url(${avatarImage})`,
@@ -1276,12 +1274,12 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
           >
             {!avatarImage && 'ISLE'}
           </div>
-          <div className="ai-info'>
-            <div className="ai-name'>ISLE</div>
+          <div className='ai-info'>
+            <div className='ai-name'>ISLE</div>
             <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
-              <div className="ai-status'>Your {selectedCountry.name} Guide</div>
+              <div className='ai-status'>Your {selectedCountry.name} Guide</div>
               <div
-                className="barbados-flag'
+                className='barbados-flag'
                 onClick={toggleCountryMenu}
                 style={{
                   width: '20px',
@@ -1296,13 +1294,13 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
           </div>
         </div>
 
-        <div className="header-buttons'>
+        <div className='header-buttons'>
           <div
-            className="bell-container'
+            className='bell-container'
             style={{ display: 'flex', marginRight: '8px', position: 'relative' }}
           >
             <button
-              className="notification-button'
+              className='notification-button'
               onClick={() => {
                 if (chatSessionId && usageStartTime) {
                   const durationSeconds = Math.round(
@@ -1336,7 +1334,7 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
               🔔
             </button>
             <span
-              className="badge'
+              className='badge'
               style={{
                 position: 'absolute',
                 top: '-8px',
@@ -1369,9 +1367,9 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
             className={`hamburger-button ${isNavOpen ? 'active' : ''}`}
             onClick={toggleNav}
           >
-            <span className="hamburger-button-span'></span>
-            <span className="hamburger-button-span'></span>
-            <span className="hamburger-button-span'></span>
+            <span className='hamburger-button-span'></span>
+            <span className='hamburger-button-span'></span>
+            <span className='hamburger-button-span'></span>
           </button>
         </div>
       </div>
@@ -1384,12 +1382,12 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
         }`}
       >
         <div className={`nav-card ${isNavOpen ? 'nav-card-open' : ''}`}>
-          <ul className="nav-list'>
+          <ul className='nav-list'>
             {navItems.map((item) => (
-              <li key={item.name} className="nav-item'>
+              <li key={item.name} className='nav-item'>
                 <Link
                   to={item.path}
-                  className="nav-item-a'
+                  className='nav-item-a'
                   onClick={(e) => {
                     if (item.onClick) {
                       item.onClick(e);
@@ -1415,7 +1413,7 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
       {/* Chat messages */}
       <div
         ref={messagesContainerRef}
-        className="chat-messages'
+        className='chat-messages'
         style={{
           marginLeft: 0,
           transition: 'margin-left .28s ease',
@@ -1435,7 +1433,7 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
             // Parent wrapper (not visible)
             <div
               key={msg.id}
-              className="message-wrapper'
+              className='message-wrapper'
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -1444,7 +1442,7 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
             >
               {/* Actual bubble/card */}
               <div
-                className="message'
+                className='message'
                 style={{
                   alignSelf: 'flex-start', // user + assistant both left
                 }}
@@ -1455,7 +1453,7 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
               {/* Variable Proximity toggle button as sibling, bottom-left */}
               {isAssistantTourismReply && (
                 <button
-                  type="button'
+                  type='button'
                   onClick={() =>
                     setProximityToggles((prev) => ({
                       ...prev,
@@ -1468,7 +1466,7 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
                     fontSize: '13px',
                     padding: '4px 6px',
                     borderRadius: '999px',
-                    border: '1px solid #d1d5db',
+                    border: '1px solid '#d1d5db',
                     background: '#ffffff',
                     cursor: 'pointer',
                     display: 'inline-flex',
@@ -1494,7 +1492,7 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
           );
         })}
         {isLoading && (
-          <div className="message'>
+          <div className='message'>
             <div style={{ display: 'flex', gap: '5px' }}>
               {[0, 1, 2].map((i) => (
                 <div
@@ -1517,7 +1515,7 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
 
       {/* Facts Card */}
       <div
-        className="facts-card'
+        className='facts-card'
         style={{
           position: 'fixed',
           top: '50%',
@@ -1535,7 +1533,7 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
         }}
       >
         <button
-          className="facts-card-close'
+          className='facts-card-close'
           onClick={() => setIsFactsCardOpen(false)}
           style={{
             position: 'absolute',
@@ -1565,7 +1563,7 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
 
       {/* Tip Card */}
       <div
-        className="tip-card'
+        className='tip-card'
         style={{
           position: 'fixed',
           top: '50%',
@@ -1583,7 +1581,7 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
         }}
       >
         <button
-          className="tip-card-close'
+          className='tip-card-close'
           onClick={() => setIsTipCardOpen(false)}
           style={{
             position: 'absolute',
@@ -1623,7 +1621,7 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
           }}
         >
           <button
-            type="button'
+            type='button'
             onClick={() => setIsTourismBarOpen(false)}
             style={{
               position: 'absolute',
@@ -1641,14 +1639,13 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
               cursor: 'pointer',
               zIndex: 1002,
             }}
-            aria-label="Close tourism tools"
+            aria-label='Close tourism tools'
           >
             ✕
           </button>
-          <ChatBarTourism 
-            visible={true} 
+          <ChatBarTourism
+            visible={true}
             onFactsClick={handleShowFacts}
-            // ✅ PASSED: The new onboarding data
             onboardingData={onboardingData}
             hasCompletedOnboarding={hasCompletedOnboarding}
           />
@@ -1659,7 +1656,7 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
       {isTourism && !showTourismBar && (
         <button
           ref={tourismButtonRef}
-          type="button'
+          type='button'
           onClick={() => setIsTourismBarOpen(true)}
           style={{
             position: 'absolute',
@@ -1677,7 +1674,7 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
             cursor: 'pointer',
             zIndex: 1000,
           }}
-          title="Show Tourism Tools"
+          title='Show Tourism Tools'
         >
           <FontAwesomeIcon
             icon={faUmbrellaBeach}
@@ -1688,7 +1685,7 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
 
       {/* Input section */}
       <div
-        className="input-section'
+        className='input-section'
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -1700,7 +1697,7 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
         }}
       >
         <textarea
-          className="input-field'
+          className='input-field'
           rows={2}
           placeholder={`Ask me about ${selectedCountry.name}...`}
           value={inputValue}
@@ -1712,16 +1709,16 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
 
         {/* Agent Picker */}
         <div
-          className="agent-menu-container'
+          className='agent-menu-container'
           style={{ position: 'relative', marginRight: '10px' }}
           onMouseEnter={() => setIsAgentMenuOpen(true)}
           onMouseLeave={() => setIsAgentMenuOpen(false)}
         >
           <button
-            className="agent-button'
-            type="button'
-            onClick={() => setIsAgentMenuOpen((prev) => !prev)} // Added toggle here for mobile touch support
-            aria-haspopup="menu"
+            className='agent-button'
+            type='button'
+            onClick={() => setIsAgentMenuOpen((prev) => !prev)}
+            aria-haspopup='menu'
             aria-expanded={isAgentMenuOpen}
             title={`Agent: ${activeAgent}`}
           >
@@ -1730,24 +1727,24 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
 
           <div
             className={`agent-menu ${isAgentMenuOpen ? 'open' : ''}`}
-            role="menu"
-            aria-label="Choose agent"
+            role='menu'
+            aria-label='Choose agent'
             style={{
               position: 'absolute',
               bottom: '100%',
-              right: '1%', // Anchor to the left of the agent button
-              marginRight: '5px', // Spacing from the agent button
-              marginBottom: '20px', // Lift it up a bit more
+              right: '1%',
+              marginRight: '5px',
+              marginBottom: '20px',
               zIndex: 2000,
-              left: 'auto', // Ensure it doesn't stretch
-              minWidth: 'max-content' // formatting
+              left: 'auto',
+              minWidth: 'max-content',
             }}
           >
             {['Main', 'Tourism'].map((agent) => (
               <button
                 key={agent}
                 className={`agent-item ${activeAgent === agent ? 'active' : ''}`}
-                role="menuitem'
+                role='menuitem'
                 onClick={() => {
                   setActiveAgent(agent);
                   setAgentIcon(agent === 'Main' ? '🤖' : '🏖️');
@@ -1767,7 +1764,7 @@ if (msg.type === 'map' && msg.mapEmbedUrl) {
 
         {/* Send button */}
         <button
-          className="submit-button'
+          className='submit-button'
           onClick={handleSendMessage}
           disabled={isLoading || !inputValue.trim()}
           style={{
