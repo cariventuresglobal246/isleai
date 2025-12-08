@@ -1110,49 +1110,50 @@ function Baje() {
       return <div style={baseCardStyle}>Loading trip setup…</div>;
     }
 
-    // Map card
-    if (msg.type === 'map' && msg.mapEmbedUrl) {
-      return (
-        <div
-          style={{
-            background: '#ffffff',
-            borderRadius: '12px',
-            padding: '12px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            maxWidth: '100%',
-          }}
-        >
-          {msg.title && (
-            <div style={{ fontWeight: 600, marginBottom: '8px', color: '#111827' }}>
-              {msg.title}
-            </div>
-          )}
-          {msg.content && (
-            <div style={{ fontSize: '13px', marginBottom: '8px', color: '#4b5563' }}>
-              {msg.content}
-            </div>
-          )}
-          <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%' }}>
-            <iframe
-              src={msg.mapEmbedUrl}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                border: 0,
-                borderRadius: '8px',
-              }}
-              loading="lazy"
-              allowFullScreen
-              referrerPolicy="no-referrer-when-downgrade"
-              title={msg.title || 'Location map'}
-            />
-          </div>
+ // Map card
+if (msg.type === 'map' && msg.mapEmbedUrl) {
+  return (
+    <div
+      style={{
+        background: '#ffffff',
+        borderRadius: '12px',
+        padding: '12px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        maxWidth: '100%',
+      }}
+    >
+      {msg.title && (
+        <div style={{ fontWeight: 600, marginBottom: '8px', color: '#111827' }}>
+          {msg.title}
         </div>
-      );
-    }
+      )}
+      {msg.content && (
+        <div style={{ fontSize: '13px', marginBottom: '8px', color: '#4b5563' }}>
+          {msg.content}
+        </div>
+      )}
+      <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%' }}>
+        <iframe
+          src={msg.mapEmbedUrl}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            border: 0,
+            borderRadius: '8px',
+          }}
+          loading="lazy"
+          allowFullScreen
+          referrerPolicy="no-referrer-when-downgrade"
+          title={msg.title || 'Location map'}
+        />
+      </div>
+    </div>
+  );
+}
+
 
     // File upload responses (if backend sends fileUrl)
     if (msg.fileUrl) {
