@@ -948,7 +948,7 @@ function Baje() {
               onClick={suggestStayOption}
               style={{
                 background: 'white',
-                border: '1px solid '#1E90FF',
+                border: '1px solid #1E90FF',
                 color: '#1E90FF',
                 borderRadius: '999px',
                 padding: '6px 12px',
@@ -1027,7 +1027,7 @@ function Baje() {
                   style={{
                     padding: '6px 10px',
                     borderRadius: '999px',
-                    border: isChecked(opt) ? '1px solid '#1E90FF' : '1px solid #d1d5db',
+                    border: isChecked(opt) ? '1px solid #1E90FF' : '1px solid #d1d5db',
                     background: isChecked(opt) ? '#1E90FF' : '#ffffff',
                     color: isChecked(opt) ? '#ffffff' : '#111827',
                     fontSize: '13px',
