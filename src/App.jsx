@@ -1,6 +1,8 @@
 import { Routes, Route } from 'react-router-dom';
 import { TourProvider } from '@reactour/tour';
 import { AuthProvider } from './AuthContext';
+
+// Import Pages
 import Signup1 from './SignUp1.jsx';
 import Baje from './Baje.jsx';
 import BajeTour from './BajeTour.jsx';
@@ -15,7 +17,7 @@ import SavedChat from './SavedChat.jsx';
 import Settings from './Settings.jsx';
 import Workbench from './Workbench.jsx';
 import Notifications from './Notifications.jsx';
-import PaymentCard from './PaymentCard.jsx';
+import PaymentCard from './PaymentCard.jsx'; // 1. PaymentCard Import
 import Onboarding from './Onboarding.jsx';
 import Paywall from './PaymentWall.jsx';
 import ForgotPassword from './ForgotPassword.jsx';
@@ -64,7 +66,10 @@ function App() {
           <Route path="/saved-chats" element={<SavedChat />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/workbench" element={<Workbench />} />
+          
+          {/* 2. PaymentCard Route Enabled */}
           <Route path="/payment-card" element={<PaymentCard />} />
+          
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/paywall" element={<Paywall />} />
           <Route path="/notifications" element={<Notifications />} />
