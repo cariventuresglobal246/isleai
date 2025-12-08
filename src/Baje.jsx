@@ -774,7 +774,7 @@ function Baje() {
                 width: '100%',
                 padding: '8px',
                 borderRadius: '8px',
-                border: '1px solid '#d1d5db',
+                border: '1px solid #d1d5db',
                 marginBottom: 12,
               }}
             >
