@@ -614,12 +614,29 @@ const BARBADOS_HOTELS = [
   },
 ];
 
+// ---------------------------------------------------------------------------
+// API base URL (Cloudflare Worker via VITE_API_URL)
+// Supports env values WITH or WITHOUT protocol (e.g. "example.workers.dev").
+// ---------------------------------------------------------------------------
+const RAW_API_URL = import.meta.env.VITE_API_URL;
+  
+// Normalize so axios always receives a valid absolute URL.
+const API_BASE = (() => {
+  let u = (RAW_API_URL || "").trim();
+  if (!u) return "http://localhost:3000"; // local dev fallback
+
+  // If user sets VITE_API_URL without protocol, assume https.
+  if (!/^https?:\/\//i.test(u)) u = `https://${u}`;
+
+  // Remove trailing slashes to avoid double-slash paths.
+  return u.replace(/\/+$/, "");
+})();
+
 // Shared Axios instance
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000", // Fallback for safety
+  baseURL: API_BASE,
   withCredentials: true,
 });
-
 // ✅ HELPER: Robustly find the token (Custom key OR Supabase default)
 const getSmartToken = () => {
   // 1. Try explicit 'auth_token' key
