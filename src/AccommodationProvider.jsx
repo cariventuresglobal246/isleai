@@ -1,7 +1,66 @@
 // src/AccommodationProvider.jsx
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+
+/* ==========================================================
+   ✅ Worker API base (Vite)
+   Supports:
+   - VITE_API_URL=https://example.workers.dev
+   - VITE_API_URL=example.workers.dev   (auto-prefixes https://)
+========================================================== */
+
+const normalizeApiBase = (raw) => {
+  const v = String(raw || "").trim();
+  if (!v) return "";
+  const withProto = /^https?:\/\//i.test(v) ? v : `https://${v}`;
+  return withProto.replace(/\/+$/, "");
+};
+
+const API_BASE = normalizeApiBase(import.meta.env.VITE_API_URL);
 
 export default function AccommodationProvider({ fetchAPI, user, activeTab, S }) {
+  // If a parent passes fetchAPI, we use it. Otherwise we create a Worker-connected one.
+  const localFetchAPI = useCallback(
+    async (path, method = "GET", body) => {
+      if (!API_BASE) {
+        console.error("Missing VITE_API_URL. Set it in your .env (restart dev server).");
+        return null;
+      }
+
+      const url = `${API_BASE}${String(path || "").startsWith("/") ? "" : "/"}${path}`;
+
+      // Optional auth header (works if you pass a Supabase session/token in `user.access_token`)
+      const token = user?.access_token || user?.token || null;
+
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          ...(method !== "GET" && method !== "HEAD" ? { body: JSON.stringify(body ?? {}) } : {}),
+        });
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          console.error(`API ${method} ${path} failed:`, res.status, text);
+          return null;
+        }
+
+        // Some endpoints may return empty 204
+        const contentType = res.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) return await res.text();
+        return await res.json();
+      } catch (e) {
+        console.error(`API ${method} ${path} error:`, e);
+        return null;
+      }
+    },
+    [user]
+  );
+
+  const callAPI = fetchAPI || localFetchAPI;
+
   // --- STATE ---
   const [bookings, setBookings] = useState([]);
   const [accommodations, setAccommodations] = useState([]);
@@ -30,11 +89,11 @@ export default function AccommodationProvider({ fetchAPI, user, activeTab, S }) 
     const load = async () => {
       if (!user) return;
       const [bk, acc, rev, adv, plans] = await Promise.all([
-        fetchAPI("/accommodationprovider_bookings"),
-        fetchAPI("/accommodationprovider_listings"),
-        fetchAPI("/accommodationprovider_reviews"),
-        fetchAPI("/entity_ai_advice?category=accommodation"),
-        fetchAPI("/entity_ai_advice?category=action_plan_acc"),
+        callAPI("/accommodationprovider_bookings"),
+        callAPI("/accommodationprovider_listings"),
+        callAPI("/accommodationprovider_reviews"),
+        callAPI("/entity_ai_advice?category=accommodation"),
+        callAPI("/entity_ai_advice?category=action_plan_acc"),
       ]);
       if (bk) setBookings(bk);
       if (acc) setAccommodations(acc);
@@ -43,7 +102,7 @@ export default function AccommodationProvider({ fetchAPI, user, activeTab, S }) 
       if (plans) setActionPlans(plans);
     };
     load();
-  }, [fetchAPI, user]);
+  }, [callAPI, user]);
 
   const accommodationById = useMemo(() => {
     const map = new Map();
@@ -168,7 +227,7 @@ export default function AccommodationProvider({ fetchAPI, user, activeTab, S }) 
       active: true
     };
 
-    const res = await fetchAPI("/accommodationprovider_listings", "POST", payload);
+    const res = await callAPI("/accommodationprovider_listings", "POST", payload);
     if (res) {
       setAccommodations((prev) => [res, ...prev]);
       setNewAcc({
