@@ -26,29 +26,30 @@ const Login = () => {
 
       console.log("Server Response:", res.data);
 
-      // ✅ FIX: Robustly find the tokens. 
-      // The log showed 'token' at the root, so we check there if session is missing.
+      // 1. Extract tokens robustly
       const accessToken = res.data.session?.access_token || res.data.token || res.data.access_token;
       const refreshToken = res.data.session?.refresh_token || res.data.refresh_token;
 
       if (res.data.success && accessToken) {
-        // 2. Save Token manually (optional, but good for backups)
+        // 2. Save Token manually (Crucial for API calls if setSession fails)
         localStorage.setItem('access_token', accessToken);
         if (res.data.user) {
           localStorage.setItem('user', JSON.stringify(res.data.user));
         }
 
-        // 3. Set Supabase Session
-        // Note: If refresh_token is missing, the session might expire sooner, 
-        // but this gets you logged in now.
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken || "", // Pass empty string if missing to avoid crash
-        });
-
-        if (sessionError) {
-          console.error("Supabase Session Error:", sessionError);
-          throw new Error("Failed to set session: " + sessionError.message);
+        // 3. Set Supabase Session (Only if we have both tokens)
+        if (refreshToken) {
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (sessionError) {
+            console.warn("Supabase Session Warning:", sessionError.message);
+            // We don't throw here anymore, because we have the access_token in localStorage
+            // which allows the app to function even if auto-refresh fails.
+          }
+        } else {
+          console.log("No refresh token provided. Proceeding with access token only.");
         }
 
         // 4. Force Reload / Redirect
