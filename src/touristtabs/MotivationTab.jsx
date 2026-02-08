@@ -1,5 +1,11 @@
 import React from "react";
 
+const API_BASE = (() => {
+  const raw = (import.meta.env.VITE_API_URL || "").trim();
+  if (!raw) return "";
+  const withProto = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  return withProto.replace(/\/+$/, "");
+})();
 export default function MotivationTab({ S }) {
   return (
     <>
