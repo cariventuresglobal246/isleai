@@ -4,6 +4,14 @@ import { useNavigate } from "react-router-dom";
 // ✅ FRONTEND Supabase client (anon key) — create: src/supabaseClient.js
 import { supabase } from "./supabaseClient";
 
+// ✅ Worker API base (supports env without protocol)
+const normalizeApiBase = (raw) => {
+  const v = String(raw || "").trim();
+  if (!v) return "";
+  const withProto = /^https?:\/\//i.test(v) ? v : `https://${v}`;
+  return withProto.replace(/\/+$/, "");
+};
+
 // Tabs
 import ChallengesTab from "./touristtabs/ChallengesTab";
 import AutoBookingTab from "./touristtabs/AutoBookingTab"; 
@@ -17,6 +25,7 @@ import MyTrip from "./touristtabs/MyTrip";
 
 export default function TouristDashboard() {
   const navigate = useNavigate();
+  const API_BASE = useMemo(() => normalizeApiBase(import.meta.env.VITE_API_URL), []);
 
   // ----- UI State -----
   const [activeTab, setActiveTab] = useState("Challenges");
@@ -352,7 +361,7 @@ export default function TouristDashboard() {
           <ChallengesTab
             S={S}
             accessToken={accessToken}
-            apiBase="/api/tourist"
+            apiBase={API_BASE ? `${API_BASE}/api/tourist` : "/api/tourist"}
             // (Old props kept in case you revert to dummy data later)
             challenges={challenges}
             incentiveLeaderboard={incentiveLeaderboard}
@@ -361,7 +370,7 @@ export default function TouristDashboard() {
         );
 
       case "My Trip":
-        return <MyTrip S={S} accessToken={accessToken} apiBase="/tourist" />;
+        return <MyTrip S={S} accessToken={accessToken} />;
 
       case "Autobooking":
         return (
@@ -409,7 +418,7 @@ export default function TouristDashboard() {
           <ChallengesTab
             S={S}
             accessToken={accessToken}
-            apiBase="/api/tourist"
+            apiBase={API_BASE ? `${API_BASE}/api/tourist` : "/api/tourist"}
             challenges={challenges}
             incentiveLeaderboard={incentiveLeaderboard}
             shoppingHunt={shoppingHunt}
