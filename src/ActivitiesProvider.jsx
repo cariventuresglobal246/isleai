@@ -1,5 +1,14 @@
 // src/ActivitiesProvider.jsx
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+
+
+// --- API BASE normalizer (supports env with or without https://) ---
+const normalizeApiBase = (raw) => {
+  const v = String(raw || "").trim();
+  if (!v) return "";
+  const withProto = /^https?:\/\//i.test(v) ? v : `https://${v}`;
+  return withProto.replace(/\/+$/, "");
+};
 
 // --- HELPER COMPONENTS (Moved outside to prevent focus loss) ---
 
@@ -57,6 +66,50 @@ export default function ActivitiesProvider({ fetchAPI, user, activeTab, S }) {
   const [collabNotes, setCollabNotes] = useState([]);
   const [actionPlans, setActionPlans] = useState([]);
 
+  // --- Worker API ---
+  const API_BASE = useMemo(() => normalizeApiBase(import.meta.env.VITE_API_URL), []);
+  const callAPI = useCallback(
+    async (path, method = "GET", body) => {
+      // Backward compatible: if parent provides fetchAPI, use it.
+      if (typeof fetchAPI === "function") {
+        return fetchAPI(path, method, body);
+      }
+      if (!API_BASE) {
+        console.error("Missing VITE_API_URL. Set it in .env (restart dev server).");
+        return null;
+      }
+
+      try {
+        const url = `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
+        const token = user?.access_token || user?.token || null;
+
+        const res = await fetch(url, {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          ...(body !== undefined && body !== null ? { body: JSON.stringify(body) } : {}),
+        });
+
+        if (res.status === 204) return null;
+        const ct = res.headers.get("content-type") || "";
+        const payload = ct.includes("application/json") ? await res.json() : await res.text();
+
+        if (!res.ok) {
+          console.error("API error:", res.status, payload);
+          return null;
+        }
+        return payload;
+      } catch (e) {
+        console.error("API request failed:", e);
+        return null;
+      }
+    },
+    [fetchAPI, API_BASE, user]
+  );
+
+
   // --- NEW ACTIVITY FORM STATE ---
   const initialActivityState = {
     title: "",
@@ -110,13 +163,13 @@ export default function ActivitiesProvider({ fetchAPI, user, activeTab, S }) {
     const load = async () => {
       if (!user) return;
       const [bk, act, rev, adv, chal, col, plans] = await Promise.all([
-        fetchAPI("/activitiesprovider_bookings"),
-        fetchAPI("/activitiesprovider_activities"),
-        fetchAPI("/activitiesprovider_reviews"),
-        fetchAPI("/entity_ai_advice?category=activities"),
-        fetchAPI("/entity_challenges"),
-        fetchAPI("/entity_collaboration"),
-        fetchAPI("/entity_ai_advice?category=action_plan_act"),
+        callAPI("/activitiesprovider_bookings"),
+        callAPI("/activitiesprovider_activities"),
+        callAPI("/activitiesprovider_reviews"),
+        callAPI("/entity_ai_advice?category=activities"),
+        callAPI("/entity_challenges"),
+        callAPI("/entity_collaboration"),
+        callAPI("/entity_ai_advice?category=action_plan_act"),
       ]);
       if (bk) setBookings(bk);
       if (act) setActivities(act);
@@ -127,7 +180,7 @@ export default function ActivitiesProvider({ fetchAPI, user, activeTab, S }) {
       if (plans) setActionPlans(plans);
     };
     load();
-  }, [fetchAPI, user]);
+  }, [callAPI, user]);
 
   const activityById = useMemo(() => {
     const map = new Map();
@@ -184,7 +237,7 @@ export default function ActivitiesProvider({ fetchAPI, user, activeTab, S }) {
       duration_minutes: Number(newActivity.duration_minutes)
     };
 
-    const res = await fetchAPI("/activitiesprovider_activities", "POST", payload);
+    const res = await callAPI("/activitiesprovider_activities", "POST", payload);
     if (res) {
       setActivities([res, ...activities]);
       setNewActivity(initialActivityState);
@@ -204,7 +257,7 @@ export default function ActivitiesProvider({ fetchAPI, user, activeTab, S }) {
       end_date: newChal.end_date || null,
       image: newChal.image
     };
-    const res = await fetchAPI("/entity_challenges", "POST", payload);
+    const res = await callAPI("/entity_challenges", "POST", payload);
     if (res) { 
       setChallenges([res, ...challenges]); 
       setNewChal({ title: "", country: "Barbados", details: "", prize: "", start_date: "", end_date: "", image: "" });
@@ -213,7 +266,7 @@ export default function ActivitiesProvider({ fetchAPI, user, activeTab, S }) {
 
   const handleAddCollab = async () => {
     if (!newCollabNote) return;
-    const res = await fetchAPI("/entity_collaboration", "POST", { who: "Activities", note: newCollabNote, date: new Date().toISOString().slice(0, 10) });
+    const res = await callAPI("/entity_collaboration", "POST", { who: "Activities", note: newCollabNote, date: new Date().toISOString().slice(0, 10) });
     if (res) { setCollabNotes([res, ...collabNotes]); setNewCollabNote(""); }
   };
 
