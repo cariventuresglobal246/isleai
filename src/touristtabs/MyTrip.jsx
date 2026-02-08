@@ -5,8 +5,12 @@ import ProgressTab from "./ProgressTab";
 import { X, Calendar as CalIcon, Clock, MapPin } from 'lucide-react';
 
 export default function MyTrip({ S, accessToken }) {
-  const API_BASE = "http://localhost:3000/api/tourism-onboarding";
-  const ENTITIES_BASE = (import.meta.env.VITE_API_URL || "http://localhost:3000") + "/api/tourism-entities";
+  // --- API base (Cloudflare Worker via VITE_API_URL) ---
+  const RAW_API = import.meta.env.VITE_API_URL || "http://localhost:3000";
+  const API_ORIGIN = RAW_API.startsWith("http") ? RAW_API : `https://${RAW_API}`;
+  const API_ROOT = API_ORIGIN.replace(/\/+$/, "");
+  const API_BASE = `${API_ROOT}/api/tourism-onboarding`;
+  const ENTITIES_BASE = `${API_ROOT}/api/tourism-entities`;
 
   // --- 1. STATE ---
   const [tripId, setTripId] = useState(null);
