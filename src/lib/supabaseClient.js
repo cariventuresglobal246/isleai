@@ -9,10 +9,21 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   );
 }
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
-});
+const SUPABASE_SINGLETON_KEY = "__isle_supabase";
+
+const globalForSupabase = globalThis;
+if (!globalForSupabase[SUPABASE_SINGLETON_KEY]) {
+  globalForSupabase[SUPABASE_SINGLETON_KEY] = createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    }
+  );
+}
+
+export const supabase = globalForSupabase[SUPABASE_SINGLETON_KEY];
