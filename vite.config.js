@@ -9,6 +9,7 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+    dedupe: ['react', 'react-dom', '@supabase/supabase-js'],
   },
   server: {
     port: 5174,
@@ -29,6 +30,5 @@ export default defineConfig({
     },
   },
 });
-
 
 
