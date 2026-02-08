@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import axios from 'axios';
-// CHANGE 1: Import the shared client. DO NOT use createClient() here.
-import { supabase } from './lib/supabaseClient'; // Adjust path if needed (e.g. './lib/supabaseClient' or '../lib/supabaseClient')
+import { supabase } from './lib/supabaseClient'; 
 import isleImage from '../isle4.png';
 
 const Login = () => {
@@ -19,7 +18,6 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // 1. Request Login
       console.log("Sending login request...");
       const res = await axios.post(`${API_URL}/auth/login`, {
         email: username.trim(),
@@ -28,22 +26,32 @@ const Login = () => {
 
       console.log("Server Response:", res.data);
 
-      if (res.data.success && res.data.session?.access_token) {
-        const { access_token, refresh_token } = res.data.session;
+      // ✅ FIX: Robustly find the tokens. 
+      // The log showed 'token' at the root, so we check there if session is missing.
+      const accessToken = res.data.session?.access_token || res.data.token || res.data.access_token;
+      const refreshToken = res.data.session?.refresh_token || res.data.refresh_token;
 
-        // 2. Save Token
-        localStorage.setItem('access_token', access_token);
-        localStorage.setItem('user', JSON.stringify(res.data.user));
+      if (res.data.success && accessToken) {
+        // 2. Save Token manually (optional, but good for backups)
+        localStorage.setItem('access_token', accessToken);
+        if (res.data.user) {
+          localStorage.setItem('user', JSON.stringify(res.data.user));
+        }
 
-        // 3. Set Supabase Session (using the shared client)
+        // 3. Set Supabase Session
+        // Note: If refresh_token is missing, the session might expire sooner, 
+        // but this gets you logged in now.
         const { error: sessionError } = await supabase.auth.setSession({
-          access_token,
-          refresh_token,
+          access_token: accessToken,
+          refresh_token: refreshToken || "", // Pass empty string if missing to avoid crash
         });
 
-        if (sessionError) console.error("Supabase Session Error:", sessionError);
+        if (sessionError) {
+          console.error("Supabase Session Error:", sessionError);
+          throw new Error("Failed to set session: " + sessionError.message);
+        }
 
-        // 4. Force Reload
+        // 4. Force Reload / Redirect
         window.location.href = '/baje'; 
       } else {
         throw new Error("Token missing from server response");
@@ -57,9 +65,7 @@ const Login = () => {
     }
   };
 
-  // ... (Rest of your CSS and return statement remains exactly the same)
   return (
-    // ... Copy your existing return/CSS code here
     <>
       <style jsx>{`
         body {
@@ -70,7 +76,6 @@ const Login = () => {
           align-items: center;
           min-height: 100vh;
         }
-        /* ... rest of your styles ... */
         .mainContainer {
           position: relative;
           width: 700px;
