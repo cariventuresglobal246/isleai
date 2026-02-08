@@ -11,6 +11,11 @@ export default defineConfig({
     },
     dedupe: ['react', 'react-dom', '@supabase/supabase-js'],
   },
+  // Merged build settings to disable minification for debugging
+  build: {
+    minify: false, 
+    target: 'esnext'
+  },
   server: {
     port: 5174,
     proxy: {
@@ -30,5 +35,3 @@ export default defineConfig({
     },
   },
 });
-
-
