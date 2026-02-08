@@ -6,9 +6,6 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.error(
     "[supabaseClient] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. Check your .env."
-  );
-}
-
 const SUPABASE_SINGLETON_KEY = "__isle_supabase";
 
 const globalForSupabase = globalThis;
@@ -27,3 +24,6 @@ if (!globalForSupabase[SUPABASE_SINGLETON_KEY]) {
 }
 
 export const supabase = globalForSupabase[SUPABASE_SINGLETON_KEY];
+true,
+  },
+});
