@@ -1,14 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { createClient } from '@supabase/supabase-js'; 
+import { supabase } from "./lib/supabaseClient";
 // NOTE: Check this image path. If your file is in 'src/', use './isle4.png'
 // If your file is in 'src/components/', use '../isle4.png'
 import isleImage from '../isle4.png'; 
-
-// --- FIX: Initialize Supabase directly here to prevent blank screen crashes ---
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState('');
