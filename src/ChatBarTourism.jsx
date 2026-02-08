@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function ChatBarTourism({ 
   visible = false, 
@@ -6,7 +7,8 @@ export default function ChatBarTourism({
   onboardingData, 
   hasCompletedOnboarding 
 }) {
-  
+  const navigate = useNavigate();
+
   // --- 1. Helper to calculate days remaining ---
   const getDaysLeft = () => {
     if (!onboardingData?.endDate) return '--';
@@ -20,7 +22,6 @@ export default function ChatBarTourism({
   // --- 2. Helper to clean up accommodation name ---
   const getStayName = () => {
     if (!onboardingData?.stayOption) return 'Not set';
-    // Returns "Sandals..." instead of "Sandals (Price...)"
     return onboardingData.stayOption.split('(')[0].trim();
   };
 
@@ -45,10 +46,8 @@ export default function ChatBarTourism({
       background: '#ffffff',
       borderRight: '1px solid #e5e7eb',
       boxShadow: '0 6px 18px rgba(15,23,42,0.08)',
-      borderTopLeftRadius: 0,
       borderTopRightRadius: 12,
       borderBottomRightRadius: 12,
-      borderBottomLeftRadius: 0,
       overflowY: 'auto',
       padding: 12,
       opacity: visible ? 1 : 0,
@@ -144,7 +143,6 @@ export default function ChatBarTourism({
       borderRadius: 8,
       fontWeight: 700,
       fontSize: 12,
-      textDecoration: 'none',
       boxShadow: '0 6px 18px rgba(15,23,42,0.08)',
       marginTop: 6,
       cursor: 'pointer',
@@ -153,17 +151,14 @@ export default function ChatBarTourism({
     ctaSecondary: {
       display: 'inline-flex',
       alignItems: 'center',
-      gap: 8,
-      padding: '8px 10px',
+      gap: 6,
+      padding: '6px 8px',
       border: '1px solid #bfdbfe',
       background: '#eff6ff',
       color: '#1d4ed8',
-      borderRadius: 8,
+      borderRadius: 6,
       fontWeight: 700,
-      fontSize: 12,
-      textDecoration: 'none',
-      boxShadow: '0 6px 18px rgba(15,23,42,0.08)',
-      marginTop: 6,
+      fontSize: 11,
       cursor: 'pointer',
     },
 
@@ -181,7 +176,7 @@ export default function ChatBarTourism({
       color: '#0f172a',
     },
 
-    today: { borderColor: '#bfdbfe', background: '#eff6ff', fontWeight: 700, color: '#1d4ed8' },
+    today: { borderColor: '#bfdbfe', background: '#eff6ff', fontWeight: 700 },
 
     dot: {
       position: 'absolute',
@@ -194,38 +189,44 @@ export default function ChatBarTourism({
   };
 
   return (
-    <aside style={S.shell} aria-hidden={!visible} aria-label="Tourism Trip Sidebar">
+    <aside style={S.shell} aria-hidden={!visible}>
       <div style={S.panel}>
-        <h3 style={S.h3}><i className="fa-solid fa-suitcase-rolling" /> Trip Overview</h3>
+        {/* Trip Overview Header + MORE button */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 style={S.h3}>
+            <i className="fa-solid fa-suitcase-rolling" /> Trip Overview
+          </h3>
 
-        {/* Budget Section (Dynamic) */}
-        <div style={S.stat}>
-          <i className="fa-solid fa-wallet" style={S.statIcon} aria-hidden="true" />
-          <div style={S.label}>Budget</div>
-          <div style={S.badge} title={onboardingData?.budget || 'Not set'}>
-            {onboardingData?.budget || '--'}
-          </div>
+          <button
+            type="button"
+            style={S.ctaSecondary}
+            onClick={() => navigate('/tourism-dashboard')}
+            title="Open full dashboard"
+          >
+            More <i className="fa-solid fa-arrow-right" />
+          </button>
         </div>
 
-        {/* Days Left (Dynamic) */}
         <div style={S.stat}>
-          <i className="fa-solid fa-hourglass-half" style={S.statIcon} aria-hidden="true" />
+          <i className="fa-solid fa-wallet" style={S.statIcon} />
+          <div style={S.label}>Budget</div>
+          <div style={S.badge}>{onboardingData?.budget || '--'}</div>
+        </div>
+
+        <div style={S.stat}>
+          <i className="fa-solid fa-hourglass-half" style={S.statIcon} />
           <div style={S.label}>Days left</div>
           <div style={S.badge}>{getDaysLeft()}</div>
         </div>
 
-        {/* Stay Section (Dynamic) */}
         <div style={S.stat}>
-          <i className="fa-solid fa-bed" style={S.statIcon} aria-hidden="true" />
+          <i className="fa-solid fa-bed" style={S.statIcon} />
           <div style={S.label}>Stay</div>
-          <div style={S.badge} title={onboardingData?.stayOption}>
-            {getStayName()}
-          </div>
+          <div style={S.badge}>{getStayName()}</div>
         </div>
 
-        {/* Bucket List Status (Dynamic) */}
         <div style={S.stat}>
-          <i className="fa-solid fa-list-check" style={S.statIcon} aria-hidden="true" />
+          <i className="fa-solid fa-list-check" style={S.statIcon} />
           <div style={S.label}>Bucket List</div>
           <div style={S.badge}>
             {onboardingData?.wantBucket ? 'Active' : 'Off'}
@@ -234,40 +235,31 @@ export default function ChatBarTourism({
 
         <div style={{ ...S.panel, marginTop: 10 }}>
           <h3 style={S.h3}>Generates Tips</h3>
-          
-          {/* Static Tip Generation List (Restored) */}
-          <div style={S.chipRow} aria-label="Tip categories">
-            <span style={S.chip}><i className="fa-solid fa-utensils"></i> Food</span>
-            <span style={S.chip}><i className="fa-solid fa-masks-theater"></i> Entertain.</span>
-            <span style={S.chip}><i className="fa-solid fa-umbrella-beach"></i> Beaches</span>
-            <span style={S.chip}><i className="fa-solid fa-person-hiking"></i> Adventure</span>
-            <span style={S.chip}><i className="fa-solid fa-van-shuttle"></i> Tours</span>
+
+          <div style={S.chipRow}>
+            <span style={S.chip}><i className="fa-solid fa-utensils" /> Food</span>
+            <span style={S.chip}><i className="fa-solid fa-masks-theater" /> Entertain.</span>
+            <span style={S.chip}><i className="fa-solid fa-umbrella-beach" /> Beaches</span>
+            <span style={S.chip}><i className="fa-solid fa-person-hiking" /> Adventure</span>
+            <span style={S.chip}><i className="fa-solid fa-van-shuttle" /> Tours</span>
           </div>
 
-          <div style={{ display: 'grid', gap: 6 }}>
-            {/* Generate Button */}
-            <button type="button" style={S.cta}>
-              <i className="fa-solid fa-wand-magic-sparkles"></i> Generate
-            </button>
+          <button style={S.cta}>
+            <i className="fa-solid fa-wand-magic-sparkles" /> Generate
+          </button>
 
-            {/* Facts button */}
-            <button
-              type="button"
-              style={S.ctaSecondary}
-              onClick={() => onFactsClick && onFactsClick()}
-            >
-              <i className="fa-solid fa-lightbulb"></i> Facts
-            </button>
-          </div>
+          <button style={S.ctaSecondary} onClick={onFactsClick}>
+            <i className="fa-solid fa-lightbulb" /> Facts
+          </button>
         </div>
       </div>
 
       <div style={S.panel}>
         <h3 style={S.h3}><i className="fa-solid fa-calendar-days" /> Calendar</h3>
-        <div style={S.calendar} aria-label="Month at a glance">
+        <div style={S.calendar}>
           {Array.from({ length: 31 }).map((_, i) => {
             const day = i + 1;
-            const isToday = day === new Date().getDate(); 
+            const isToday = day === new Date().getDate();
             const has = [3, 9, 12, 17, 20, 25].includes(day);
             return (
               <div key={day} style={{ ...S.day, ...(isToday ? S.today : {}) }}>

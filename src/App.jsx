@@ -22,6 +22,9 @@ import ForgotPassword from './ForgotPassword.jsx';
 import ResetPassword from './ResetPassword.jsx';
 import Loadscreen from './Loadscreen.jsx';
 import ChatBarTourism from './ChatBarTourism.jsx';
+import TouristDashboard from './TourismDashboard';
+import EntitiesPortal from './EntitiesPortal';
+import WhatsappPopUp from './WhatsappPopup';
 
 const tourSteps = [
   {
@@ -72,6 +75,10 @@ function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/loadscreen" element={<Loadscreen />} />
           <Route path="/chat-bar-tourism" element={<ChatBarTourism />} />
+          <Route path="/tourism-dashboard" element={<TouristDashboard />} />
+          <Route path="/entities" element={<EntitiesPortal />} />
+          <Route path="/whatsapp-popup" element={<WhatsappPopUp />} />
+
           <Route path="*" element={<div>Page Not Found</div>} />
         </Routes>
       </TourProvider>

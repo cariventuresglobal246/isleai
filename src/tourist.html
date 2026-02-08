@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ISLEAI – Payment</title>
+  <style>
+    :root {
+      --bg: #050509;
+      --card-bg: #111217;
+      --field-bg: white;
+      --field-border: #2a2b38;
+      --field-border-focus: #6c5ce7;
+      --text-main: #f9fafb;
+      --text-muted: white;
+      --accent: #6c5ce7;
+      --accent-soft: rgba(108, 92, 231, 0.1);
+      --danger: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;
+      background: radial-gradient(circle at top left, #111827 0, #020617 45%, #000 100%);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+
+    .page {
+      max-width: 1080px;
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr);
+      gap: 32px;
+    }
+
+    @media (max-width: 900px) {
+      .page {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: linear-gradient(135deg, #020617, #050816);
+      border-radius: 24px;
+      padding: 28px 28px 24px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+    }
+
+    .panel h2 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 18px;
+      letter-spacing: 0.03em;
+    }
+
+    .subheading {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.17em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      gap: 16px;
+    }
+
+    .form-row {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.82rem;
+      margin-bottom: 6px;
+      color: var(--text-muted);
+    }
+
+    .field {
+      position: relative;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--field-border);
+      background: var(--field-bg);
+      color: var(--text-main);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease,
+        background 0.15s ease, transform 0.05s ease;
+    }
+
+    input::placeholder {
+      color: #6b7280;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--field-border-focus);
+      box-shadow: 0 0 0 1px rgba(108, 92, 231, 0.6);
+      transform: translateY(-0.5px);
+    }
+
+    .field-hint {
+      margin-top: 6px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .card-icons {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      gap: 4px;
+      font-size: 0.9rem;
+    }
+
+    .card-pill {
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #0f172a;
+      border: 1px solid #1f2937;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+    }
+
+    .inline-icon {
+      position: absolute;
+      right: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      opacity: 0.9;
+    }
+
+    .select-wrapper {
+      position: relative;
+    }
+
+    .select-wrapper::after {
+      content: "▾";
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.7rem;
+      pointer-events: none;
+      color: var(--text-muted);
+    }
+
+    select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      padding-right: 28px;
+    }
+
+    /* Summary panel */
+    .summary-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .summary-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .summary-tag {
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+
+    .features-list {
+      margin: 10px 0 18px;
+      list-style: none;
+      padding: 0;
+    }
+
+    .features-list li {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .features-list span.icon {
+      font-size: 1rem;
+      line-height: 1.4;
+    }
+
+    .divider {
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+      margin: 16px 0;
+    }
+
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .price-row strong {
+      color: var(--text-main);
+      font-weight: 500;
+    }
+
+    .due-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      font-size: 0.95rem;
+    }
+
+    .due-row strong {
+      font-size: 1.05rem;
+    }
+
+    .btn-primary {
+      width: 100%;
+      margin-top: 20px;
+      padding: 13px 18px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #a855f7, #6366f1);
+      color: #f9fafb;
+      font-size: 0.96rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 18px 40px rgba(88, 80, 236, 0.65);
+      transition: transform 0.05s ease, box-shadow 0.08s ease, filter 0.1s ease;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+      box-shadow: 0 22px 55px rgba(88, 80, 236, 0.8);
+    }
+
+    .btn-primary:active {
+      transform: translateY(1px);
+      box-shadow: 0 12px 30px rgba(88, 80, 236, 0.55);
+    }
+
+    .fine-print {
+      margin-top: 14px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    .fine-print a {
+      color: #9ca3ff;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    /* Small ISLEAI mark */
+    .brand-mark {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: radial-gradient(circle, #22c55e 0, #22c55e 35%, #16a34a 100%);
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.9);
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <!-- LEFT: FORM -->
+    <section class="panel">
+      <div class="brand-mark">
+        <span class="brand-dot"></span>
+        ISLEAI • Secure checkout
+      </div>
+
+      <div class="subheading">Payment method</div>
+      <div class="form-row">
+        <label for="card-number">Card number</label>
+        <div class="field">
+          <input
+            id="card-number"
+            name="card-number"
+            type="text"
+            inputmode="numeric"
+            autocomplete="cc-number"
+            placeholder="1234 5678 9012 3456"
+          />
+          <div class="card-icons">
+            <span class="card-pill">VISA</span>
+            <span class="card-pill">MC</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-row">
+          <label for="exp-date">Expiration date</label>
+          <div class="field">
+            <input
+              id="exp-date"
+              name="exp-date"
+              type="text"
+              inputmode="numeric"
+              autocomplete="cc-exp"
+              placeholder="MM / YY"
+            />
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="cvc">Security code</label>
+          <div class="field">
+            <input
+              id="cvc"
+              name="cvc"
+              type="text"
+              inputmode="numeric"
+              autocomplete="cc-csc"
+              placeholder="CVC"
+            />
+            <span class="inline-icon">123</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="subheading" style="margin-top: 6px;">Billing address</div>
+
+      <div class="form-row">
+        <label for="full-name">Full name</label>
+        <div class="field">
+          <input
+            id="full-name"
+            name="full-name"
+            type="text"
+            autocomplete="name"
+            placeholder="Enter your full name"
+          />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label for="country">Country or region</label>
+        <div class="field select-wrapper">
+          <select id="country" name="country" autocomplete="country-name">
+            <option value="BB" selected>Barbados</option>
+            <option value="TT">Trinidad &amp; Tobago</option>
+            <option value="JM">Jamaica</option>
+            <option value="LC">Saint Lucia</option>
+            <option value="DM">Dominica</option>
+            <option value="US">United States</option>
+            <option value="GB">United Kingdom</option>
+            <option value="CA">Canada</option>
+          </select>
+        </div>
+        <div class="field-hint">
+          ISLEAI prices are billed in USD. VAT is applied where required.
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label for="address1">Address line 1</label>
+        <div class="field">
+          <input
+            id="address1"
+            name="address1"
+            type="text"
+            autocomplete="address-line1"
+            placeholder="Street address, P.O. box, company name"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: SUMMARY -->
+    <aside class="panel">
+      <header class="summary-header">
+        <div>
+          <div class="summary-title">ISLEAI Plus plan</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+            Unlock tourism-ready AI for your team.
+          </div>
+        </div>
+        <div class="summary-tag">Monthly</div>
+      </header>
+
+      <div>
+        <div class="subheading" style="margin-bottom: 8px;">Top features</div>
+        <ul class="features-list">
+          <li>
+            <span class="icon">⚡</span>
+            <span>Smarter, faster ISLEAI responses across your tourism workflows.</span>
+          </li>
+          <li>
+            <span class="icon">📎</span>
+            <span>More messages, uploads, and itinerary drafts per day.</span>
+          </li>
+          <li>
+            <span class="icon">🗺️</span>
+            <span>Higher-quality maps, attractions, and activity suggestions.</span>
+          </li>
+          <li>
+            <span class="icon">📂</span>
+            <span>Extra memory &amp; context for your hotel and destination data.</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="price-row">
+        <span>Monthly subscription</span>
+        <strong>$20.00</strong>
+      </div>
+      <div class="price-row">
+        <span>VAT (0%)</span>
+        <strong>$0.00</strong>
+      </div>
+
+      <div class="due-row">
+        <span>Due today</span>
+        <strong>$20.00</strong>
+      </div>
+
+      <button class="btn-primary" type="submit">
+        Subscribe to ISLEAI Plus
+      </button>
+
+      <p class="fine-print">
+        By subscribing, you authorize CariVentures / ISLEAI to charge your card
+        according to the terms until you cancel. You also agree to the
+        <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+      </p>
+    </aside>
+  </main>
+</body>
+</html>

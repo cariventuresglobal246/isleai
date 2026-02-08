@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "./AuthContext";
+import { Link } from "react-router-dom";
+import axios from 'axios';
+// CHANGE 1: Import the shared client. DO NOT use createClient() here.
+import { supabase } from './lib/supabaseClient'; // Adjust path if needed (e.g. './lib/supabaseClient' or '../lib/supabaseClient')
 import isleImage from '../isle4.png';
 
 const Login = () => {
@@ -8,36 +10,56 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
 
-    const sanitizedEmail = username.trim();
-    const sanitizedPassword = password.trim();
-    if (!sanitizedEmail || !sanitizedPassword) {
-      setError('Email and password are required');
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const success = await login(sanitizedEmail, sanitizedPassword);
-      if (!success) {
-        throw new Error('Invalid email or password');
+      // 1. Request Login
+      console.log("Sending login request...");
+      const res = await axios.post(`${API_URL}/auth/login`, {
+        email: username.trim(),
+        password: password.trim()
+      }, { withCredentials: true });
+
+      console.log("Server Response:", res.data);
+
+      if (res.data.success && res.data.session?.access_token) {
+        const { access_token, refresh_token } = res.data.session;
+
+        // 2. Save Token
+        localStorage.setItem('access_token', access_token);
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+
+        // 3. Set Supabase Session (using the shared client)
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token,
+          refresh_token,
+        });
+
+        if (sessionError) console.error("Supabase Session Error:", sessionError);
+
+        // 4. Force Reload
+        window.location.href = '/baje'; 
+      } else {
+        throw new Error("Token missing from server response");
       }
-    } catch (error) {
-      setError(error.message || 'Login failed');
-      console.error('Login error:', error);
+    } catch (err) {
+      console.error('Login error:', err);
+      const msg = err.response?.data?.message || err.message || 'Login failed';
+      setError(msg);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // ... (Rest of your CSS and return statement remains exactly the same)
   return (
+    // ... Copy your existing return/CSS code here
     <>
       <style jsx>{`
         body {
@@ -48,6 +70,7 @@ const Login = () => {
           align-items: center;
           min-height: 100vh;
         }
+        /* ... rest of your styles ... */
         .mainContainer {
           position: relative;
           width: 700px;
@@ -145,444 +168,116 @@ const Login = () => {
           font-size: 14px;
         }
         @media (min-width: 320px) and (max-width: 374px) {
-          body {
-            padding: 8px;
-            align-items: flex-start;
-          }
-          .mainContainer {
-            width: 100%;
-            height: auto;
-            min-height: 60px;
-            border-radius: 6px;
-            padding: 8px;
-            margin: 80px 0 0 0;
-          }
-          .loginHeader {
-            padding: 12px 16px;
-            margin-bottom: 8px;
-          }
-          .logo {
-            font-size: 22px;
-          }
-          .logoContainer {
-            height: 12vh;
-            margin-bottom: -15px;
-          }
-          .logoImage {
-            height: 55%;
-          }
-          .loginForm {
-            width: 95%;
-            margin-top: 8px;
-            margin-right: 10px;
-          }
-          .inputGroup {
-            margin-bottom: 12px;
-            margin-right: 8px;
-          }
-          .inputGroupLabel {
-            font-size: 13px;
-            margin-bottom: 6px;
-          }
-          .inputGroupInput {
-            height: 36px;
-            font-size: 13px;
-            padding: 0 8px;
-            border-radius: 6px;
-          }
-          .loginButton {
-            height: 36px;
-            font-size: 14px;
-            margin-left: 0;
-            margin-bottom: 6px;
-            border-radius: 6px;
-          }
-          .signupLink {
-            margin-top: 12px;
-            font-size: 13px;
-          }
-          .signupLinkA {
-            margin-left: 3px;
-          }
-          .errorMessage {
-            font-size: 11px;
-            margin-bottom: 12px;
-          }
+          body { padding: 8px; align-items: flex-start; }
+          .mainContainer { width: 100%; height: auto; min-height: 60px; border-radius: 6px; padding: 8px; margin: 80px 0 0 0; }
+          .loginHeader { padding: 12px 16px; margin-bottom: 8px; }
+          .logo { font-size: 22px; }
+          .logoContainer { height: 12vh; margin-bottom: -15px; }
+          .logoImage { height: 55%; }
+          .loginForm { width: 95%; margin-top: 8px; margin-right: 10px; }
+          .inputGroup { margin-bottom: 12px; margin-right: 8px; }
+          .inputGroupLabel { font-size: 13px; margin-bottom: 6px; }
+          .inputGroupInput { height: 36px; font-size: 13px; padding: 0 8px; border-radius: 6px; }
+          .loginButton { height: 36px; font-size: 14px; margin-left: 0; margin-bottom: 6px; border-radius: 6px; }
+          .signupLink { margin-top: 12px; font-size: 13px; }
+          .signupLinkA { margin-left: 3px; }
+          .errorMessage { font-size: 11px; margin-bottom: 12px; }
         }
         @media (min-width: 375px) and (max-width: 424px) {
-          body {
-            padding: 8px;
-            align-items: flex-start;
-          }
-          .mainContainer {
-            width: 100%;
-            height: auto;
-            min-height: 60px;
-            border-radius: 6px;
-            padding: 10px;
-            margin: 80px 0 0 0;
-          }
-          .loginHeader {
-            padding: 15px 20px;
-            margin-bottom: 10px;
-          }
-          .logo {
-            font-size: 24px;
-          }
-          .logoContainer {
-            height: 15vh;
-            margin-bottom: -20px;
-          }
-          .logoImage {
-            height: 60%;
-          }
-          .loginForm {
-            width: 92%;
-            margin-top: 10px;
-            margin-right: 15px;
-          }
-          .inputGroup {
-            margin-bottom: 15px;
-            margin-right: 10px;
-          }
-          .inputGroupLabel {
-            font-size: 14px;
-            margin-bottom: 8px;
-          }
-          .inputGroupInput {
-            height: 40px;
-            font-size: 14px;
-            padding: 0 10px;
-            border-radius: 8px;
-          }
-          .loginButton {
-            height: 40px;
-            font-size: 16px;
-            margin-left: 0;
-            margin-bottom: 8px;
-            border-radius: 8px;
-          }
-          .signupLink {
-            margin-top: 15px;
-            font-size: 14px;
-          }
-          .signupLinkA {
-            margin-left: 4px;
-          }
-          .errorMessage {
-            font-size: 12px;
-            margin-bottom: 15px;
-          }
+          body { padding: 8px; align-items: flex-start; }
+          .mainContainer { width: 100%; height: auto; min-height: 60px; border-radius: 6px; padding: 10px; margin: 80px 0 0 0; }
+          .loginHeader { padding: 15px 20px; margin-bottom: 10px; }
+          .logo { font-size: 24px; }
+          .logoContainer { height: 15vh; margin-bottom: -20px; }
+          .logoImage { height: 60%; }
+          .loginForm { width: 92%; margin-top: 10px; margin-right: 15px; }
+          .inputGroup { margin-bottom: 15px; margin-right: 10px; }
+          .inputGroupLabel { font-size: 14px; margin-bottom: 8px; }
+          .inputGroupInput { height: 40px; font-size: 14px; padding: 0 10px; border-radius: 8px; }
+          .loginButton { height: 40px; font-size: 16px; margin-left: 0; margin-bottom: 8px; border-radius: 8px; }
+          .signupLink { margin-top: 15px; font-size: 14px; }
+          .signupLinkA { margin-left: 4px; }
+          .errorMessage { font-size: 12px; margin-bottom: 15px; }
         }
         @media (min-width: 425px) and (max-width: 479px) {
-          body {
-            padding: 8px;
-            align-items: flex-start;
-          }
-          .mainContainer {
-            width: 100%;
-            height: auto;
-            min-height: 60px;
-            border-radius: 6px;
-            padding: 12px;
-            margin: 80px 0 0 0;
-          }
-          .loginHeader {
-            padding: 15px 20px;
-            margin-bottom: 10px;
-          }
-          .logo {
-            font-size: 24px;
-          }
-          .logoContainer {
-            height: 15vh;
-            margin-bottom: -20px;
-          }
-          .logoImage {
-            height: 60%;
-          }
-          .loginForm {
-            width: 90%;
-            margin-top: 10px;
-            margin-right: 20px;
-          }
-          .inputGroup {
-            margin-bottom: 15px;
-            margin-right: 10px;
-          }
-          .inputGroupLabel {
-            font-size: 14px;
-            margin-bottom: 8px;
-          }
-          .inputGroupInput {
-            height: 40px;
-            font-size: 14px;
-            padding: 0 10px;
-            border-radius: 8px;
-          }
-          .loginButton {
-            height: 40px;
-            font-size: 16px;
-            margin-left: 0;
-            margin-bottom: 8px;
-            border-radius: 8px;
-          }
-          .signupLink {
-            margin-top: 15px;
-            font-size: 14px;
-          }
-          .signupLinkA {
-            margin-left: 4px;
-          }
-          .errorMessage {
-            font-size: 12px;
-            margin-bottom: 15px;
-          }
+          body { padding: 8px; align-items: flex-start; }
+          .mainContainer { width: 100%; height: auto; min-height: 60px; border-radius: 6px; padding: 12px; margin: 80px 0 0 0; }
+          .loginHeader { padding: 15px 20px; margin-bottom: 10px; }
+          .logo { font-size: 24px; }
+          .logoContainer { height: 15vh; margin-bottom: -20px; }
+          .logoImage { height: 60%; }
+          .loginForm { width: 90%; margin-top: 10px; margin-right: 20px; }
+          .inputGroup { margin-bottom: 15px; margin-right: 10px; }
+          .inputGroupLabel { font-size: 14px; margin-bottom: 8px; }
+          .inputGroupInput { height: 40px; font-size: 14px; padding: 0 10px; border-radius: 8px; }
+          .loginButton { height: 40px; font-size: 16px; margin-left: 0; margin-bottom: 8px; border-radius: 8px; }
+          .signupLink { margin-top: 15px; font-size: 14px; }
+          .signupLinkA { margin-left: 4px; }
+          .errorMessage { font-size: 12px; margin-bottom: 15px; }
         }
         @media (min-width: 481px) and (max-width: 767px) {
-          body {
-            padding: 12px;
-            align-items: flex-start;
-          }
-          .mainContainer {
-            width: 85%;
-            height: auto;
-            min-height: 650px;
-            border-radius: 6px;
-            padding: 15px;
-          }
-          .loginHeader {
-            padding: 15px 25px;
-            margin-bottom: 10px;
-          }
-          .logo {
-            font-size: 26px;
-          }
-          .logoContainer {
-            height: 18vh;
-            margin-bottom: -25px;
-          }
-          .logoImage {
-            height: 65%;
-          }
-          .loginForm {
-            width: 85%;
-            margin-top: 8px;
-          }
-          .inputGroup {
-            margin-bottom: 18px;
-          }
-          .inputGroupLabel {
-            font-size: 15px;
-            margin-bottom: 9px;
-          }
-          .inputGroupInput {
-            height: 45px;
-            font-size: 15px;
-            padding: 0 12px;
-            border-radius: 9px;
-          }
-          .loginButton {
-            height: 45px;
-            font-size: 17px;
-            margin-left: 10px;
-            margin-bottom: 9px;
-            border-radius: 9px;
-          }
-          .signupLink {
-            margin-top: 18px;
-            font-size: 15px;
-          }
-          .signupLinkA {
-            margin-left: 5px;
-          }
-          .errorMessage {
-            font-size: 13px;
-            margin-bottom: 18px;
-          }
+          body { padding: 12px; align-items: flex-start; }
+          .mainContainer { width: 85%; height: auto; min-height: 650px; border-radius: 6px; padding: 15px; }
+          .loginHeader { padding: 15px 25px; margin-bottom: 10px; }
+          .logo { font-size: 26px; }
+          .logoContainer { height: 18vh; margin-bottom: -25px; }
+          .logoImage { height: 65%; }
+          .loginForm { width: 85%; margin-top: 8px; }
+          .inputGroup { margin-bottom: 18px; }
+          .inputGroupLabel { font-size: 15px; margin-bottom: 9px; }
+          .inputGroupInput { height: 45px; font-size: 15px; padding: 0 12px; border-radius: 9px; }
+          .loginButton { height: 45px; font-size: 17px; margin-left: 10px; margin-bottom: 9px; border-radius: 9px; }
+          .signupLink { margin-top: 18px; font-size: 15px; }
+          .signupLinkA { margin-left: 5px; }
+          .errorMessage { font-size: 13px; margin-bottom: 18px; }
         }
         @media (min-width: 768px) and (max-width: 1024px) {
-          body {
-            padding: 16px;
-          }
-          .mainContainer {
-            display: flex;
-            align-items: center;
-            width: 170%;
-            height: 600px;
-            border-radius: 7px;
-            padding: 20px;
-            margin-left: -90px;
-          }
-          .loginHeader {
-            padding: 18px 28px;
-            margin-bottom: 8px;
-          }
-          .logo {
-            font-size: 28px;
-          }
-          .logoContainer {
-            height: 18vh;
-            margin-bottom: -28px;
-          }
-          .logoImage {
-            height: 65%;
-          }
-          .loginForm {
-            width: 80%;
-            margin-top: 8px;
-          }
-          .inputGroup {
-            margin-bottom: 18px;
-          }
-          .inputGroupLabel {
-            font-size: 15px;
-            margin-bottom: 9px;
-          }
-          .inputGroupInput {
-            height: 48px;
-            font-size: 15px;
-            padding: 0 14px;
-            border-radius: 9px;
-          }
-          .loginButton {
-            height: 48px;
-            font-size: 17px;
-            margin-left: 15px;
-            margin-bottom: 9px;
-            border-radius: 9px;
-          }
-          .signupLink {
-            margin-top: 18px;
-            font-size: 15px;
-          }
-          .signupLinkA {
-            margin-left: 5px;
-          }
-          .errorMessage {
-            font-size: 13px;
-            margin-bottom: 18px;
-          }
+          body { padding: 16px; }
+          .mainContainer { display: flex; align-items: center; width: 170%; height: 600px; border-radius: 7px; padding: 20px; margin-left: -90px; }
+          .loginHeader { padding: 18px 28px; margin-bottom: 8px; }
+          .logo { font-size: 28px; }
+          .logoContainer { height: 18vh; margin-bottom: -28px; }
+          .logoImage { height: 65%; }
+          .loginForm { width: 80%; margin-top: 8px; }
+          .inputGroup { margin-bottom: 18px; }
+          .inputGroupLabel { font-size: 15px; margin-bottom: 9px; }
+          .inputGroupInput { height: 48px; font-size: 15px; padding: 0 14px; border-radius: 9px; }
+          .loginButton { height: 48px; font-size: 17px; margin-left: 15px; margin-bottom: 9px; border-radius: 9px; }
+          .signupLink { margin-top: 18px; font-size: 15px; }
+          .signupLinkA { margin-left: 5px; }
+          .errorMessage { font-size: 13px; margin-bottom: 18px; }
         }
         @media (min-width: 1025px) and (max-width: 1280px) {
-          body {
-            padding: 20px;
-          }
-          .mainContainer {
-            width: 750px;
-            height: 820px;
-            border-radius: 8px;
-            padding: 20px;
-          }
-          .loginHeader {
-            padding: 20px 30px;
-            margin-bottom: 5px;
-          }
-          .logo {
-            font-size: 30px;
-          }
-          .logoContainer {
-            height: 20vh;
-            margin-bottom: -30px;
-          }
-          .logoImage {
-            height: 70%;
-          }
-          .loginForm {
-            width: 80%;
-            margin-top: 5px;
-          }
-          .inputGroup {
-            margin-bottom: 20px;
-          }
-          .inputGroupLabel {
-            font-size: 16px;
-            margin-bottom: 10px;
-          }
-          .inputGroupInput {
-            height: 50px;
-            font-size: 16px;
-            padding: 0 15px;
-            border-radius: 10px;
-          }
-          .loginButton {
-            height: 50px;
-            font-size: 18px;
-            margin-left: 20px;
-            margin-bottom: 10px;
-            border-radius: 10px;
-          }
-          .signupLink {
-            margin-top: 20px;
-            font-size: 16px;
-          }
-          .signupLinkA {
-            margin-left: 5px;
-          }
-          .errorMessage {
-            font-size: 14px;
-            margin-bottom: 20px;
-          }
+          body { padding: 20px; }
+          .mainContainer { width: 750px; height: 820px; border-radius: 8px; padding: 20px; }
+          .loginHeader { padding: 20px 30px; margin-bottom: 5px; }
+          .logo { font-size: 30px; }
+          .logoContainer { height: 20vh; margin-bottom: -30px; }
+          .logoImage { height: 70%; }
+          .loginForm { width: 80%; margin-top: 5px; }
+          .inputGroup { margin-bottom: 20px; }
+          .inputGroupLabel { font-size: 16px; margin-bottom: 10px; }
+          .inputGroupInput { height: 50px; font-size: 16px; padding: 0 15px; border-radius: 10px; }
+          .loginButton { height: 50px; font-size: 18px; margin-left: 20px; margin-bottom: 10px; border-radius: 10px; }
+          .signupLink { margin-top: 20px; font-size: 16px; }
+          .signupLinkA { margin-left: 5px; }
+          .errorMessage { font-size: 14px; margin-bottom: 20px; }
         }
         @media (min-width: 1281px) {
-          body {
-            padding: 24px;
-          }
-          .mainContainer {
-            width: 700px;
-            height: 700px;
-            border-radius: 8px;
-            padding: 24px;
-          }
-          .loginHeader {
-            padding: 20px 30px;
-            margin-bottom: 5px;
-          }
-          .logo {
-            font-size: 30px;
-          }
-          .logoContainer {
-            height: 20vh;
-            margin-bottom: -30px;
-          }
-          .logoImage {
-            height: 70%;
-          }
-          .loginForm {
-            width: 80%;
-            margin-top: 5px;
-          }
-          .inputGroup {
-            margin-bottom: 20px;
-          }
-          .inputGroupLabel {
-            font-size: 16px;
-            margin-bottom: 10px;
-          }
-          .inputGroupInput {
-            height: 50px;
-            font-size: 16px;
-            padding: 0 15px;
-            border-radius: 10px;
-          }
-          .loginButton {
-            height: 50px;
-            font-size: 18px;
-            margin-left: 20px;
-            margin-bottom: 10px;
-            border-radius: 10px;
-          }
-          .signupLink {
-            margin-top: 20px;
-            font-size: 16px;
-          }
-          .signupLinkA {
-            margin-left: 5px;
-          }
-          .errorMessage {
-            font-size: 14px;
-            margin-bottom: 20px;
-          }
+          body { padding: 24px; }
+          .mainContainer { width: 700px; height: 700px; border-radius: 8px; padding: 24px; }
+          .loginHeader { padding: 20px 30px; margin-bottom: 5px; }
+          .logo { font-size: 30px; }
+          .logoContainer { height: 20vh; margin-bottom: -30px; }
+          .logoImage { height: 70%; }
+          .loginForm { width: 80%; margin-top: 5px; }
+          .inputGroup { margin-bottom: 20px; }
+          .inputGroupLabel { font-size: 16px; margin-bottom: 10px; }
+          .inputGroupInput { height: 50px; font-size: 16px; padding: 0 15px; border-radius: 10px; }
+          .loginButton { height: 50px; font-size: 18px; margin-left: 20px; margin-bottom: 10px; border-radius: 10px; }
+          .signupLink { margin-top: 20px; font-size: 16px; }
+          .signupLinkA { margin-left: 5px; }
+          .errorMessage { font-size: 14px; margin-bottom: 20px; }
         }
       `}</style>
       <div className="mainContainer">

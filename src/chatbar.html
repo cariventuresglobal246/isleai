@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trip Sidebar</title>
+
+  <!-- Font Awesome -->
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    rel="stylesheet"
+  />
+
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --line: #e5e7eb;
+      --brand: #2563eb;
+      --soft: #f8fafc;
+      --chip: #f1f5f9;
+      --success: #16a34a;
+      --shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+    }
+
+    aside.bar {
+      width: 340px;
+      background: var(--bg);
+      padding: 20px;
+      border-left: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      overflow-y: auto;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .panel h3 {
+      margin: 0 0 12px 0;
+      font-size: 15px;
+      letter-spacing: 0.2px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .stat {
+      display: grid;
+      grid-template-columns: 40px 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--soft);
+      margin-bottom: 10px;
+    }
+
+    .stat i {
+      font-size: 18px;
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: var(--chip);
+      color: var(--brand);
+    }
+
+    .label {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .badge {
+      display: inline-grid;
+      place-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      color: var(--text);
+      min-width: 36px;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--chip);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid #bbf7d0;
+      background: #dcfce7;
+      color: var(--success);
+      border-radius: 10px;
+      font-weight: 700;
+      text-decoration: none;
+      box-shadow: var(--shadow);
+    }
+
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+
+    .day {
+      aspect-ratio: 1/1;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      background: var(--soft);
+    }
+
+    .day.today {
+      border-color: #bfdbfe;
+      background: #eff6ff;
+      font-weight: 700;
+      color: #1d4ed8;
+    }
+
+    .day.has::after {
+      content: "";
+      position: absolute;
+      bottom: 6px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--brand);
+    }
+  </style>
+</head>
+
+<body>
+  <aside class="bar">
+    <div class="panel">
+      <h3>Trip Overview</h3>
+
+      <div class="stat">
+        <i class="fa-solid fa-wallet"></i>
+        <div class="label">Budget</div>
+        <div class="badge">$2,500</div>
+      </div>
+
+      <div class="stat">
+        <i class="fa-solid fa-hourglass-half"></i>
+        <div class="label">Days left on trip</div>
+        <div class="badge">6</div>
+      </div>
+
+      <div class="stat">
+        <i class="fa-solid fa-circle-check"></i>
+        <div class="label">Activities accomplished</div>
+        <div class="badge">7</div>
+      </div>
+
+      <div class="stat">
+        <i class="fa-solid fa-list-check"></i>
+        <div class="label">Bucket List</div>
+        <div class="badge">12</div>
+      </div>
+
+      <div class="panel" style="margin-top: 16px">
+        <h3>Generates Tips</h3>
+        <div class="chip-row">
+          <span class="chip"><i class="fa-solid fa-utensils"></i> Food</span>
+          <span class="chip"><i class="fa-solid fa-masks-theater"></i> Entertainment</span>
+          <span class="chip"><i class="fa-solid fa-umbrella-beach"></i> Beaches</span>
+          <span class="chip"><i class="fa-solid fa-person-hiking"></i> Adventure</span>
+          <span class="chip"><i class="fa-solid fa-van-shuttle"></i> Tours</span>
+        </div>
+        <a class="cta" href="#"><i class="fa-solid fa-wand-magic-sparkles"></i> Generate Tips</a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3><i class="fa-solid fa-calendar-days" style="margin-right: 6px"></i>Calendar</h3>
+      <div class="calendar">
+        <div class="day">1</div><div class="day">2</div><div class="day has">3</div>
+        <div class="day">4</div><div class="day">5</div><div class="day today">6</div>
+        <div class="day">7</div><div class="day">8</div><div class="day has">9</div>
+        <div class="day">10</div><div class="day">11</div><div class="day has">12</div>
+        <div class="day">13</div><div class="day">14</div><div class="day">15</div>
+        <div class="day">16</div><div class="day has">17</div><div class="day">18</div>
+        <div class="day">19</div><div class="day has">20</div><div class="day">21</div>
+        <div class="day">22</div><div class="day">23</div><div class="day">24</div>
+        <div class="day has">25</div><div class="day">26</div><div class="day">27</div>
+        <div class="day">28</div><div class="day">29</div><div class="day">30</div><div class="day">31</div>
+      </div>
+    </div>
+  </aside>
+</body>
+</html>

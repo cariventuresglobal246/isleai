@@ -1,77 +1,74 @@
 // src/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from './lib/supabaseClient';
 
 export const AuthContext = createContext(null);
 
-// Stable hook export (never flip this to default or change its name)
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within <AuthProvider>');
   return ctx;
 }
 
-// Stable component export (keep as named export)
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const API = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-    (async () => {
+    // 1. Check active session on initial load
+    const checkSession = async () => {
       try {
-        const res = await fetch(`${API}/auth/me`, {
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
-          // optional redirect logic here…
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          setUser(session.user);
+          // Optional: Ensure our manual token is set if you use it for API calls
+          localStorage.setItem('access_token', session.access_token);
         } else {
           setUser(null);
-          localStorage.removeItem('user');
+          localStorage.removeItem('access_token');
         }
-      } catch (e) {
-        console.error('Auth check failed:', e);
-        setUser(null);
-        localStorage.removeItem('user');
+      } catch (error) {
+        console.error("Session check error:", error);
       } finally {
         setLoading(false);
       }
-    })();
-  }, [API]);
+    };
+
+    checkSession();
+
+    // 2. Listen for changes (SignIn, SignOut, TokenRefresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth Event:", event); // Debugging help
+      
+      if (session?.user) {
+        setUser(session.user);
+        localStorage.setItem('access_token', session.access_token);
+      } else {
+        setUser(null);
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('user');
+      }
+      setLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const login = async (email, password) => {
-    try {
-      const res = await fetch(`${API}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email, password }),
-      });
-      if (!res.ok) return false;
-      const data = await res.json();
-      setUser(data.user);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      navigate('/baje', { replace: true });
-      return true;
-    } catch (e) {
-      console.error('Login error:', e);
-      return false;
-    }
+    // Rely on Login.jsx to call supabase.auth.signInWithPassword.
+    // The listener above will detect the change automatically.
+    return true; 
   };
 
   const logout = async () => {
-    try {
-      await fetch(`${API}/auth/logout`, { method: 'POST', credentials: 'include' });
-      setUser(null);
-      localStorage.removeItem('user');
-      navigate('/login', { replace: true });
-    } catch (e) {
-      console.error('Logout error:', e);
-    }
+    await supabase.auth.signOut();
+    // The listener above will handle state cleanup
+    navigate('/login', { replace: true });
   };
 
   return (

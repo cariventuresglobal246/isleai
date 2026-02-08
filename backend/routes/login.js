@@ -1,3 +1,4 @@
+// routes/login.js
 import express from 'express';
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
@@ -13,8 +14,7 @@ const supabaseAdmin = createClient(
   {
     auth: {
       autoRefreshToken: false,
-      persistSession: false,
-      persistSessionCallback: () => null
+      persistSession: false
     }
   }
 );
@@ -60,6 +60,7 @@ passport.use(
       try {
         console.log('🔍 Auth attempt for:', email.substring(0, 3) + '...');
 
+        // 1. Sign in to Supabase (Get Tokens)
         const { data: authData, error: authError } = await supabaseAdmin.auth.signInWithPassword({
           email: email.toLowerCase().trim(),
           password
@@ -72,6 +73,7 @@ passport.use(
 
         console.log('✅ Auth success for user:', authData.user.id);
 
+        // 2. Fetch Profile
         const { data: profileData, error: profileError } = await supabaseAdmin
           .from('profiles')
           .select('id, email, username, is_first_time_user')
@@ -83,13 +85,15 @@ passport.use(
           return done(null, false, { message: 'Authentication failed' });
         }
 
-        console.log('✅ Profile loaded for:', profileData.username);
-
+        // 3. Attach tokens to user object so we can send them later
         const user = {
           id: profileData.id,
           email: profileData.email,
           username: profileData.username,
-          isFirstTimeUser: profileData.is_first_time_user
+          isFirstTimeUser: profileData.is_first_time_user,
+          // 👇 CAPTURE TOKENS HERE
+          accessToken: authData.session?.access_token,
+          refreshToken: authData.session?.refresh_token
         };
 
         return done(null, user);
@@ -101,16 +105,12 @@ passport.use(
   )
 );
 
-// Passport Serialization
 passport.serializeUser((user, done) => {
-  console.log('🔄 Serializing user:', user.id);
   done(null, user.id);
 });
 
 passport.deserializeUser(async (id, done) => {
   try {
-    console.log('🔄 Deserializing user ID:', id);
-    
     const { data: profile, error } = await supabaseAdmin
       .from('profiles')
       .select('id, email, username, is_first_time_user')
@@ -118,7 +118,6 @@ passport.deserializeUser(async (id, done) => {
       .single();
 
     if (error || !profile) {
-      console.error('❌ Deserialize failed:', error?.message);
       return done(new Error('User profile not found during session restore'));
     }
 
@@ -131,7 +130,6 @@ passport.deserializeUser(async (id, done) => {
 
     done(null, user);
   } catch (err) {
-    console.error('💥 Deserialize error:', err);
     done(err);
   }
 });
@@ -140,34 +138,22 @@ passport.deserializeUser(async (id, done) => {
 router.post('/login', loginLimiter, (req, res, next) => {
   passport.authenticate('local', (err, user, info) => {
     if (err) {
-      console.error('💥 Passport authentication error:', err);
-      return res.status(500).json({ 
-        error: 'Internal server error', 
-        message: 'Authentication process failed' 
-      });
+      return res.status(500).json({ error: 'Internal server error' });
     }
 
     if (!user) {
-      console.log('❌ Login failed:', info?.message);
       return res.status(401).json({ 
         error: 'Authentication failed', 
         message: info?.message || 'Invalid email or password' 
       });
     }
 
-    console.log('✅ Preparing session for user:', user.id);
-
     req.login(user, (loginErr) => {
       if (loginErr) {
-        console.error('💥 Session creation error:', loginErr);
-        return res.status(500).json({ 
-          error: 'Session creation failed', 
-          message: 'Unable to create user session' 
-        });
+        return res.status(500).json({ error: 'Session creation failed' });
       }
 
-      console.log('✅ Login successful, session created for:', user.id);
-
+      // 👇 SEND TOKENS TO FRONTEND
       res.status(200).json({
         success: true,
         user: {
@@ -175,6 +161,11 @@ router.post('/login', loginLimiter, (req, res, next) => {
           email: user.email,
           username: user.username,
           isFirstTimeUser: user.isFirstTimeUser
+        },
+        // This is what your frontend is trying to destructure:
+        session: {
+            access_token: user.accessToken,
+            refresh_token: user.refreshToken
         },
         message: 'Login successful'
       });
@@ -184,47 +175,22 @@ router.post('/login', loginLimiter, (req, res, next) => {
 
 // Logout Route
 router.post('/logout', (req, res) => {
-  console.log('🔓 Logout requested for user:', req.user?.id || 'anonymous');
-  
   req.logout((err) => {
-    if (err) {
-      console.error('💥 Logout error:', err);
-      return res.status(500).json({ error: 'Logout failed' });
-    }
-
-    res.clearCookie('sid', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
-    });
-
+    if (err) return res.status(500).json({ error: 'Logout failed' });
+    
     req.session.destroy((err) => {
-      if (err) {
-        console.error('💥 Session destroy error:', err);
-        return res.status(500).json({ error: 'Session cleanup failed' });
-      }
-      
+      if (err) return res.status(500).json({ error: 'Session cleanup failed' });
       res.clearCookie('sid');
       res.json({ success: true, message: 'Logged out successfully' });
     });
   });
 });
 
-// Authentication Check Middleware
 export const isAuthenticated = (req, res, next) => {
-  if (req.isAuthenticated()) {
-    console.log('✅ Auth middleware passed for:', req.user?.id);
-    return next();
-  }
-  
-  console.log('❌ Auth middleware failed - no session');
-  res.status(401).json({ 
-    error: 'Unauthorized', 
-    message: 'Authentication required' 
-  });
+  if (req.isAuthenticated()) return next();
+  res.status(401).json({ error: 'Unauthorized', message: 'Authentication required' });
 };
 
-// Get Current User
 router.get('/me', isAuthenticated, (req, res) => {
   res.json({
     user: {
@@ -233,26 +199,6 @@ router.get('/me', isAuthenticated, (req, res) => {
       username: req.user.username,
       isFirstTimeUser: req.user.isFirstTimeUser
     }
-  });
-});
-
-// Global Error Handler
-router.use((err, req, res, next) => {
-  console.error('💥 Global error handler:', {
-    message: err.message,
-    stack: err.stack,
-    url: req.url,
-    method: req.method,
-    user: req.user?.id
-  });
-
-  if (res.headersSent) {
-    return next(err);
-  }
-
-  res.status(err.status || 500).json({
-    error: 'Internal Server Error',
-    message: process.env.NODE_ENV === 'production' ? 'Something went wrong' : err.message
   });
 });
 

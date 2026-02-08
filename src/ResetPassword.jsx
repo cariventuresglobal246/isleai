@@ -1,34 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { createClient } from '@supabase/supabase-js';
-import isleImage from '../isle4.png';
+import { createClient } from '@supabase/supabase-js'; 
+// NOTE: Check this image path. If your file is in 'src/', use './isle4.png'
+// If your file is in 'src/components/', use '../isle4.png'
+import isleImage from '../isle4.png'; 
 
-const supabase = createClient(
-  'https://lgurtucciqvwgjaphdqp.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndXJ0dWNjaXF2d2dqYXBoZHFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjk2MzgzNTAsImV4cCI6MjA0NTIxNDM1MH0.I1ajlHp5b4pGL-NQzzvcVdznoiyIvps49Ws5GZHSXzk'
-);
+// --- FIX: Initialize Supabase directly here to prevent blank screen crashes ---
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState('');
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSessionValid, setIsSessionValid] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setMessage('Please enter your new password.');
+    // 1. Check if we already have a session (e.g. from the URL hash)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setIsSessionValid(true);
+        setMessage('Verified. Please enter your new password.');
+      } else {
+        console.log("No session yet, waiting for recovery event...");
       }
     });
 
-    const url = new URL(window.location.href);
-    if (url.hash.includes('type=recovery')) {
-      setMessage('Please enter your new password.');
-    }
+    // 2. Listen for the Password Recovery event
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth Event:", event);
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+        setIsSessionValid(true);
+        setMessage('Verified. Please enter your new password.');
+      }
+    });
 
     return () => {
-      authListener.subscription.unsubscribe();
+      if (authListener && authListener.subscription) {
+        authListener.subscription.unsubscribe();
+      }
     };
   }, []);
 
@@ -37,6 +50,12 @@ const ResetPassword = () => {
     setError(null);
     setMessage(null);
     setIsLoading(true);
+
+    if (!isSessionValid) {
+      setError('Session missing or expired. Please request a new password reset link.');
+      setIsLoading(false);
+      return;
+    }
 
     if (newPassword.length < 8) {
       setError('Password must be at least 8 characters long');
@@ -49,11 +68,12 @@ const ResetPassword = () => {
         password: newPassword,
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       setMessage('Password updated successfully! Redirecting to login...');
+      
+      // Clear session after update and redirect
+      await supabase.auth.signOut();
       setTimeout(() => navigate('/login'), 2000);
     } catch (error) {
       setError(error.message || 'Failed to update password');
@@ -178,352 +198,121 @@ const ResetPassword = () => {
 
         /* Mobile Portrait (320px to 374px) */
         @media (min-width: 320px) and (max-width: 374px) {
-          body {
-            padding: 8px;
-            align-items: flex-start;
-          }
-          .mainContainer {
-            width: 100%;
-            height: auto;
-            min-height: 60px;
-            border-radius: 6px;
-            padding: 8px;
-            margin: 80px 0 0 0;
-          }
-          .resetHeader {
-            padding: 12px 16px;
-            margin-bottom: 8px;
-          }
-          .logo {
-            font-size: 22px;
-          }
-          .logoContainer {
-            height: 12vh;
-            margin-bottom: -15px;
-          }
-          .logoImage {
-            height: 55%;
-          }
-          .resetForm {
-            width: 95%;
-            margin-top: 8px;
-            margin-right: 10px;
-          }
-          .inputGroup {
-            margin-bottom: 12px;
-            margin-right: 8px;
-          }
-          .inputGroupLabel {
-            font-size: 13px;
-            margin-bottom: 6px;
-          }
-          .inputGroupInput {
-            height: 36px;
-            font-size: 13px;
-            padding: 0 8px;
-            border-radius: 6px;
-          }
-          .resetButton {
-            height: 36px;
-            font-size: 14px;
-            margin-left: 0;
-            margin-bottom: 6px;
-            border-radius: 6px;
-          }
-          .loginLink {
-            margin-top: 12px;
-            font-size: 13px;
-          }
-          .loginLinkA {
-            margin-left: 3px;
-          }
-          .errorMessage {
-            font-size: 11px;
-            margin-bottom: 12px;
-          }
-          .successMessage {
-            font-size: 11px;
-            margin-bottom: 12px;
-          }
+          body { padding: 8px; align-items: flex-start; }
+          .mainContainer { width: 100%; height: auto; min-height: 60px; padding: 8px; margin: 80px 0 0 0; }
+          .resetHeader { padding: 12px 16px; margin-bottom: 8px; }
+          .logo { font-size: 22px; }
+          .logoContainer { height: 12vh; margin-bottom: -15px; }
+          .logoImage { height: 55%; }
+          .resetForm { width: 95%; margin-top: 8px; margin-right: 10px; }
+          .inputGroup { margin-bottom: 12px; margin-right: 8px; }
+          .inputGroupLabel { font-size: 13px; margin-bottom: 6px; }
+          .inputGroupInput { height: 36px; font-size: 13px; padding: 0 8px; }
+          .resetButton { height: 36px; font-size: 14px; margin-left: 0; margin-bottom: 6px; }
+          .loginLink { margin-top: 12px; font-size: 13px; }
+          .errorMessage, .successMessage { font-size: 11px; margin-bottom: 12px; }
         }
 
         /* Mobile Portrait (375px to 424px) */
         @media (min-width: 375px) and (max-width: 424px) {
-          body {
-            padding: 8px;
-            align-items: flex-start;
-          }
-          .mainContainer {
-            width: 100%;
-            height: auto;
-            min-height: 60px;
-            border-radius: 6px;
-            padding: 10px;
-            margin: 80px 0 0 0;
-          }
-          .resetHeader {
-            padding: 15px 20px;
-            margin-bottom: 10px;
-          }
-          .logo {
-            font-size: 24px;
-          }
-          .logoContainer {
-            height: 15vh;
-            margin-bottom: -20px;
-          }
-          .logoImage {
-            height: 60%;
-          }
-          .resetForm {
-            width: 92%;
-            margin-top: 10px;
-            margin-right: 15px;
-          }
-          .inputGroup {
-            margin-bottom: 15px;
-            margin-right: 10px;
-          }
-          .inputGroupLabel {
-            font-size: 14px;
-            margin-bottom: 8px;
-          }
-          .inputGroupInput {
-            height: 40px;
-            font-size: 14px;
-            padding: 0 10px;
-            border-radius: 8px;
-          }
-          .resetButton {
-            height: 40px;
-            font-size: 16px;
-            margin-left: 0;
-            margin-bottom: 8px;
-            border-radius: 8px;
-          }
-          .loginLink {
-            margin-top: 15px;
-            font-size: 14px;
-          }
-          .loginLinkA {
-            margin-left: 4px;
-          }
-          .errorMessage {
-            font-size: 12px;
-            margin-bottom: 15px;
-          }
-          .successMessage {
-            font-size: 12px;
-            margin-bottom: 15px;
-          }
+          body { padding: 8px; align-items: flex-start; }
+          .mainContainer { width: 100%; height: auto; min-height: 60px; padding: 10px; margin: 80px 0 0 0; }
+          .resetHeader { padding: 15px 20px; margin-bottom: 10px; }
+          .logo { font-size: 24px; }
+          .logoContainer { height: 15vh; margin-bottom: -20px; }
+          .logoImage { height: 60%; }
+          .resetForm { width: 92%; margin-top: 10px; margin-right: 15px; }
+          .inputGroup { margin-bottom: 15px; margin-right: 10px; }
+          .inputGroupLabel { font-size: 14px; margin-bottom: 8px; }
+          .inputGroupInput { height: 40px; font-size: 14px; padding: 0 10px; }
+          .resetButton { height: 40px; font-size: 16px; margin-left: 0; margin-bottom: 8px; }
+          .loginLink { margin-top: 15px; font-size: 14px; }
+          .errorMessage, .successMessage { font-size: 12px; margin-bottom: 15px; }
         }
 
         /* Mobile Portrait (425px to 479px) */
         @media (min-width: 425px) and (max-width: 479px) {
-          body {
-            padding: 8px;
-            align-items: flex-start;
-          }
-          .mainContainer {
-            width: 100%;
-            height: auto;
-            min-height: 60px;
-            border-radius: 6px;
-            padding: 12px;
-            margin: 80px 0 0 0;
-          }
-          .resetHeader {
-            padding: 15px 20px;
-            margin-bottom: 10px;
-          }
-          .logo {
-            font-size: 24px;
-          }
-          .logoContainer {
-            height: 15vh;
-            margin-bottom: -20px;
-          }
-          .logoImage {
-            height: 60%;
-          }
-          .resetForm {
-            width: 90%;
-            margin-top: 10px;
-            margin-right: 20px;
-          }
-          .inputGroup {
-            margin-bottom: 15px;
-            margin-right: 10px;
-          }
-          .inputGroupLabel {
-            font-size: 14px;
-            margin-bottom: 8px;
-          }
-          .inputGroupInput {
-            height: 40px;
-            font-size: 14px;
-            padding: 0 10px;
-            border-radius: 8px;
-          }
-          .resetButton {
-            height: 40px;
-            font-size: 16px;
-            margin-left: 0;
-            margin-bottom: 8px;
-            border-radius: 8px;
-          }
-          .loginLink {
-            margin-top: 15px;
-            font-size: 14px;
-          }
-          .loginLinkA {
-            margin-left: 4px;
-          }
-          .errorMessage {
-            font-size: 12px;
-            margin-bottom: 15px;
-          }
-          .successMessage {
-            font-size: 12px;
-            margin-bottom: 15px;
-          }
+          body { padding: 8px; align-items: flex-start; }
+          .mainContainer { width: 100%; height: auto; min-height: 60px; padding: 12px; margin: 80px 0 0 0; }
+          .resetHeader { padding: 15px 20px; margin-bottom: 10px; }
+          .logo { font-size: 24px; }
+          .logoContainer { height: 15vh; margin-bottom: -20px; }
+          .logoImage { height: 60%; }
+          .resetForm { width: 90%; margin-top: 10px; margin-right: 20px; }
+          .inputGroup { margin-bottom: 15px; margin-right: 10px; }
+          .inputGroupLabel { font-size: 14px; margin-bottom: 8px; }
+          .inputGroupInput { height: 40px; font-size: 14px; padding: 0 10px; }
+          .resetButton { height: 40px; font-size: 16px; margin-left: 0; margin-bottom: 8px; }
+          .loginLink { margin-top: 15px; font-size: 14px; }
+          .errorMessage, .successMessage { font-size: 12px; margin-bottom: 15px; }
         }
 
         /* Mobile Landscape (481px to 767px) */
         @media (min-width: 481px) and (max-width: 767px) {
-          body {
-            padding: 12px;
-            align-items: flex-start;
-          }
-          .mainContainer {
-            width: 85%;
-            height: auto;
-            min-height: 650px;
-            border-radius: 6px;
-            padding: 15px;
-          }
-          .resetHeader {
-            padding: 15px 25px;
-            margin-bottom: 10px;
-          }
-          .logo {
-            font-size: 26px;
-          }
-          .logoContainer {
-            height: 18vh;
-            margin-bottom: -25px;
-          }
-          .logoImage {
-            height: 65%;
-          }
-          .resetForm {
-            width: 85%;
-            margin-top: 8px;
-          }
-          .inputGroup {
-            margin-bottom: 18px;
-          }
-          .inputGroupLabel {
-            font-size: 15px;
-            margin-bottom: 9px;
-          }
-          .inputGroupInput {
-            height: 45px;
-            font-size: 15px;
-            padding: 0 12px;
-            border-radius: 9px;
-          }
-          .resetButton {
-            height: 45px;
-            font-size: 17px;
-            margin-left: 10px;
-            margin-bottom: 9px;
-            border-radius: 9px;
-          }
-          .loginLink {
-            margin-top: 18px;
-            font-size: 15px;
-          }
-          .loginLinkA {
-            margin-left: 5px;
-          }
-          .errorMessage {
-            font-size: 13px;
-            margin-bottom: 18px;
-          }
-          .successMessage {
-            font-size: 13px;
-            margin-bottom: 18px;
-          }
+          body { padding: 12px; align-items: flex-start; }
+          .mainContainer { width: 85%; height: auto; min-height: 650px; padding: 15px; }
+          .resetHeader { padding: 15px 25px; margin-bottom: 10px; }
+          .logo { font-size: 26px; }
+          .logoContainer { height: 18vh; margin-bottom: -25px; }
+          .logoImage { height: 65%; }
+          .resetForm { width: 85%; margin-top: 8px; }
+          .inputGroup { margin-bottom: 18px; }
+          .inputGroupLabel { font-size: 15px; margin-bottom: 9px; }
+          .inputGroupInput { height: 45px; font-size: 15px; padding: 0 12px; }
+          .resetButton { height: 45px; font-size: 17px; margin-left: 10px; margin-bottom: 9px; }
+          .loginLink { margin-top: 18px; font-size: 15px; }
+          .errorMessage, .successMessage { font-size: 13px; margin-bottom: 18px; }
         }
 
         /* Tablet Portrait and Landscape (768px to 1024px) */
         @media (min-width: 768px) and (max-width: 1024px) {
-          body {
-            padding: 16px;
-          }
-          .mainContainer {
-            display: flex;
-            align-items: center;
-            width: 170%;
-            height: 600px;
-            border-radius: 7px;
-            padding: 20px;
-            margin-left: -90px;
-          }
-          .resetHeader {
-            padding: 18px 28px;
-            margin-bottom: 8px;
-          }
-          .logo {
-            font-size: 28px;
-          }
-          .logoContainer {
-            height: 18vh;
-            margin-bottom: -28px;
-          }
-          .logoImage {
-            height: 65%;
-          }
-          .resetForm {
-            width: 80%;
-            margin-top: 8px;
-          }
-          .inputGroup {
-            margin-bottom: 18px;
-          }
-          .inputGroupLabel {
-            font-size: 15px;
-            margin-bottom: 9px;
-          }
-          .inputGroupInput {
-            height: 48px;
-            font-size: 15px;
-            padding: 0 14px;
-            border-radius: 9px;
-          }
-          .resetButton {
-            height: 48px;
-            font-size: 17px;
-            margin-left: 15px;
-            margin-bottom: 9px;
-            border-radius: 9px;
-          }
-          .loginLink {
-            margin-top: 18px;
-            font-size: 15px;
-          }
-          .loginLinkA {
-            margin-left: 5px;
-          }
-          .errorMessage {
-            font-size: 13px;
-            margin-bottom: 18px;
-          }
-          .successMessage {
-            font-size: 13px;
-            margin-bottom: 18px;
-          }
+          body { padding: 16px; }
+          .mainContainer { display: flex; align-items: center; width: 170%; height: 600px; padding: 20px; margin-left: -90px; }
+          .resetHeader { padding: 18px 28px; margin-bottom: 8px; }
+          .logo { font-size: 28px; }
+          .logoContainer { height: 18vh; margin-bottom: -28px; }
+          .logoImage { height: 65%; }
+          .resetForm { width: 80%; margin-top: 8px; }
+          .inputGroup { margin-bottom: 18px; }
+          .inputGroupLabel { font-size: 15px; margin-bottom: 9px; }
+          .inputGroupInput { height: 48px; font-size: 15px; padding: 0 14px; }
+          .resetButton { height: 48px; font-size: 17px; margin-left: 15px; margin-bottom: 9px; }
+          .loginLink { margin-top: 18px; font-size: 15px; }
+          .errorMessage, .successMessage { font-size: 13px; margin-bottom: 18px; }
+        }
+
+        /* Desktop (1025px to 1280px) */
+        @media (min-width: 1025px) and (max-width: 1280px) {
+          body { padding: 20px; }
+          .mainContainer { width: 750px; height: 820px; padding: 20px; }
+          .resetHeader { padding: 20px 30px; margin-bottom: 5px; }
+          .logo { font-size: 30px; }
+          .logoContainer { height: 20vh; margin-bottom: -30px; }
+          .logoImage { height: 70%; }
+          .resetForm { width: 80%; margin-top: 5px; }
+          .inputGroup { margin-bottom: 20px; }
+          .inputGroupLabel { font-size: 16px; margin-bottom: 10px; }
+          .inputGroupInput { height: 50px; font-size: 16px; padding: 0 15px; }
+          .resetButton { height: 50px; font-size: 18px; margin-left: 20px; margin-bottom: 10px; }
+          .loginLink { margin-top: 20px; font-size: 16px; }
+          .errorMessage, .successMessage { font-size: 14px; margin-bottom: 20px; }
+        }
+
+        /* Large Desktop (1281px+) */
+        @media (min-width: 1281px) {
+          body { padding: 24px; }
+          .mainContainer { width: 700px; height: 700px; padding: 24px; }
+          .resetHeader { padding: 20px 30px; margin-bottom: 5px; }
+          .logo { font-size: 30px; }
+          .logoContainer { height: 20vh; margin-bottom: -30px; }
+          .logoImage { height: 70%; }
+          .resetForm { width: 80%; margin-top: 5px; }
+          .inputGroup { margin-bottom: 20px; }
+          .inputGroupLabel { font-size: 16px; margin-bottom: 10px; }
+          .inputGroupInput { height: 50px; font-size: 16px; padding: 0 15px; }
+          .resetButton { height: 50px; font-size: 18px; margin-left: 20px; margin-bottom: 10px; }
+          .loginLink { margin-top: 20px; font-size: 16px; }
+          .errorMessage, .successMessage { font-size: 14px; margin-bottom: 20px; }
         }
       `}</style>
       <div className="mainContainer">
@@ -545,14 +334,15 @@ const ResetPassword = () => {
               onChange={(e) => setNewPassword(e.target.value)}
               required
               disabled={isLoading}
+              placeholder="Min 8 chars"
             />
           </div>
           {error && <div className="errorMessage">{error}</div>}
           {message && <div className="successMessage">{message}</div>}
           <button
             type="submit"
-            className={isLoading ? "resetButton resetButtonDisabled" : "resetButton"}
-            disabled={isLoading}
+            className={isLoading || !isSessionValid ? "resetButton resetButtonDisabled" : "resetButton"}
+            disabled={isLoading || !isSessionValid}
           >
             {isLoading ? 'Updating...' : 'Update Password'}
           </button>
