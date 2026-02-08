@@ -1,11 +1,17 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
+const API_BASE = (() => {
+  const raw = (API_BASE || "").trim();
+  if (!raw) return "";
+  const withProto = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  return withProto.replace(/\/+$/, "");
+})();
 export default function ChallengesTab({ S, accessToken, apiBase = "/api/tourist" }) {
   // ✅ 1. Define API URL for the direct table connection
   // We use the TourismEntities router we set up in server.js
-  const ENTITIES_API = import.meta.env.VITE_API_URL 
-    ? `${import.meta.env.VITE_API_URL}/api/tourism-entities` 
+  const ENTITIES_API = API_BASE 
+    ? `${API_BASE}/api/tourism-entities` 
     : "http://localhost:3000/api/tourism-entities";
 
   // ✅ 2. Updated Filters to match REAL columns in your 'entity_challenges' table
