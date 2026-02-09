@@ -644,6 +644,65 @@ const api = axios.create({
   },
 });
 
+
+/* =========================================================================
+   ✅ Maps: detect "place/map/directions" intent and render Google Maps iframe
+   - We use the simple q= query embed which does NOT require an API key.
+========================================================================= */
+const buildGMapsEmbedUrl = (query = "") => {
+  const q = String(query || "").trim();
+  if (!q) return null;
+  return `https://www.google.com/maps?q=${encodeURIComponent(q)}&output=embed`;
+};
+
+const isMapIntent = (text = "") => {
+  const t = String(text || "").toLowerCase();
+  if (!t) return false;
+
+  // Strong signals
+  const strong = [
+    "where is",
+    "where's",
+    "show me",
+    "map of",
+    "on the map",
+    "directions to",
+    "route to",
+    "how do i get to",
+    "navigate to",
+    "location of",
+    "locate",
+    "nearest",
+    "near me",
+  ];
+  if (strong.some((k) => t.includes(k))) return true;
+
+  // Soft signals: mention map + some place-like wording
+  const soft = ["map", "directions", "location", "address"];
+  return soft.some((k) => t.includes(k));
+};
+
+const extractPlaceQuery = (text = "", country = "") => {
+  let t = String(text || "").trim();
+
+  // Strip common prefixes
+  t = t.replace(/^(please\s+)?(show\s+me\s+|find\s+me\s+)?(the\s+)?/i, "");
+
+  // Remove common map phrases
+  t = t
+    .replace(/\b(on the map|map of|directions to|route to|where is|where's|location of|locate|navigate to)\b/gi, "")
+    .replace(/[?!.]+$/g, "")
+    .trim();
+
+  // If user wrote "in Barbados" etc, keep it; otherwise append country to help geocode
+  const c = String(country || "").trim();
+  if (c && t && !t.toLowerCase().includes(c.toLowerCase())) {
+    t = `${t}, ${c}`;
+  }
+  return t;
+};
+
+
 // Auto-attach Bearer token if present.
 // This keeps requests authenticated without cookies.
 api.interceptors.request.use((config) => {
@@ -1189,10 +1248,13 @@ function Baje() {
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
 
+
+    const userText = inputValue.trim();
+
     const userMessage = {
       id: uuidv4(),
       role: 'user',
-      content: `${activeAgent}: ${inputValue}`,
+      content: `${activeAgent}: ${userText}`,
       created_at: new Date().toISOString(),
     };
 
@@ -1220,6 +1282,19 @@ function Baje() {
         content: res.data.response || res.data.text || 'No response',
         created_at: new Date().toISOString(),
       };
+
+      // ✅ Tourism: if user asked for a place/map/directions, return ONLY a map iframe card
+      const isTourismAgent = /tour/i.test(String(activeAgent || ""));
+      if (isTourismAgent && isMapIntent(userText)) {
+        const placeQuery = extractPlaceQuery(userText, selectedCountry?.name || "");
+        const embedUrl = buildGMapsEmbedUrl(placeQuery);
+        if (embedUrl) {
+          assistantMessage.type = 'map';
+          assistantMessage.mapEmbedUrl = embedUrl;
+          assistantMessage.title = undefined;
+          assistantMessage.content = '';
+        }
+      }
 
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (err) {
@@ -2315,16 +2390,6 @@ function Baje() {
             maxWidth: '100%',
           }}
         >
-          {msg.title && (
-            <div style={{ fontWeight: 600, marginBottom: '8px', color: '#111827' }}>
-              {msg.title}
-            </div>
-          )}
-          {msg.content && (
-            <div style={{ fontSize: '13px', marginBottom: '8px', color: '#4b5563' }}>
-              {msg.content}
-            </div>
-          )}
           <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%' }}>
             <iframe
               src={msg.mapEmbedUrl}
