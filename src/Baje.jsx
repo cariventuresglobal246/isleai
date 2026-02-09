@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
+import { supabase } from './lib/supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import sanitizeHtml from 'sanitize-html';
@@ -667,6 +668,18 @@ const api = axios.create({
   baseURL: API_BASE,
   withCredentials: true,
 });
+
+// Bearer token helper (Supabase)
+async function getBearerAuthHeader() {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch {
+    return {};
+  }
+}
+
 // ✅ HELPER: Robustly find the token (Custom key OR Supabase default)
 const getSmartToken = () => {
   // 1. Try explicit 'auth_token' key
@@ -860,7 +873,7 @@ function Baje() {
 
       try {
         // 1. Accommodations
-        const resAccom = await api.get("/public/listings");
+        const resAccom = await api.get("/api/public/listings");
         if (resAccom.data && Array.isArray(resAccom.data.data)) {
           setDbListings(resAccom.data.data);
         } else if (Array.isArray(resAccom.data)) {
@@ -868,7 +881,7 @@ function Baje() {
         }
 
         // 2. ✅ Activities
-        const resAct = await api.get("/public/activities");
+        const resAct = await api.get("/api/public/activities");
         if (resAct.data && Array.isArray(resAct.data.data)) {
           setDbActivities(resAct.data.data);
         }
@@ -1212,51 +1225,35 @@ function Baje() {
     setIsLoading(true);
 
     try {
-      const token = getSmartToken();
-      if (!token) throw new Error("Missing auth token (please sign in again).");
-
+      const authHeader = await getBearerAuthHeader();
       const res = await api.post(
         '/ask',
         {
-        prompt: `${selectedCountry.name} ${activeAgent}: ${userMessage.content.replace(
-          /^Main:\s*/,
-          ''
-        )}`,
-        userId,
-        countryName: selectedCountry.name,
-      }
-        ,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+          prompt: `${selectedCountry.name} ${activeAgent}: ${userMessage.content.replace(
+            /^Main:\s*/,
+            ''
+          )}`,
+          userId,
+          countryName: selectedCountry.name,
+        },
+        { headers: { ...authHeader } }
       );
-
-      const wantsMap =
+const wantsMap =
         String(activeAgent || '').toLowerCase().includes('tour') && isMapIntent(inputValue);
 
       const placeQuery = wantsMap ? extractPlaceQuery(inputValue, selectedCountry?.name) : '';
       const fallbackMapEmbedUrl = wantsMap ? buildGMapsEmbedUrl(placeQuery) : null;
 
-      // Log the actual data to your browser console to see the structure
-      console.log("AI Response Data:", res.data);
-
-    const assistantMessage = {
-  id: uuidv4(),
-  role: 'assistant',
-  agent: activeAgent,
-  type: wantsMap ? 'map' : (res.data.responseType || 'text'),
-  title: wantsMap ? undefined : res.data.title,
-  mapEmbedUrl: res.data.mapEmbedUrl || fallbackMapEmbedUrl,
-  // NEW LOGIC: check if res.data is a string first, then check object properties
-  content: wantsMap 
-    ? '' 
-    : (typeof res.data === 'string' 
-        ? res.data 
-        : (res.data.response || res.data.text || 'No response')),
-  created_at: new Date().toISOString(),
-};
+      const assistantMessage = {
+        id: uuidv4(),
+        role: 'assistant',
+        agent: activeAgent, // tag which agent answered
+        type: wantsMap ? 'map' : (res.data.responseType || 'text'),
+        title: wantsMap ? undefined : res.data.title,
+        mapEmbedUrl: res.data.mapEmbedUrl || fallbackMapEmbedUrl,
+        content: wantsMap ? '' : (res.data.response || res.data.text || 'No response'),
+        created_at: new Date().toISOString(),
+      };
 
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (err) {
