@@ -38,7 +38,7 @@ export default function MyTrip({ S, accessToken }) {
     const fetchTripData = async () => {
       try {
         const res = await axios.get(`${API_BASE}/trip`, {
-            withCredentials: true,
+            withCredentials: false,
             headers: { 'Authorization': `Bearer ${accessToken}` }
         });
 
@@ -66,9 +66,9 @@ export default function MyTrip({ S, accessToken }) {
           if (!stayListingId) return "Pending";
           try {
             const resBookings = await axios.get(
-              `${ENTITIES_BASE}/accommodationprovider_bookings`,
+              `${API_BASE}/api/public/accommodation-bookings`,
               {
-                withCredentials: true,
+                withCredentials: false,
                 headers: { Authorization: `Bearer ${accessToken}` },
                 params: { listing_id: stayListingId },
               }
@@ -217,7 +217,7 @@ export default function MyTrip({ S, accessToken }) {
     try {
         await axios.patch(`${API_BASE}/tasks/${taskId}`, 
             { column_name: nextColumn }, 
-            { withCredentials: true, headers: { 'Authorization': `Bearer ${accessToken}` } }
+            { withCredentials: false, headers: { 'Authorization': `Bearer ${accessToken}` } }
         );
     } catch (e) { 
         // Silent fail or revert
