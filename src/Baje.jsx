@@ -649,12 +649,24 @@ const BARBADOS_HOTELS = [
   },
 ];
 
+// --- API base (Vite) --------------------------------------------------
+// Supports VITE_API_URL with or without protocol.
+// Examples:
+//   VITE_API_URL=https://isleaihono.cariventuresglobal246.workers.dev
+//   VITE_API_URL=isleaihono.cariventuresglobal246.workers.dev
+const normalizeApiBase = (raw) => {
+  const v = String(raw || "").trim();
+  if (!v) return "http://localhost:3000";
+  const withProto = /^https?:\/\//i.test(v) ? v : `https://${v}`;
+  return withProto.replace(/\/+$/g, ""); // remove trailing slashes
+};
+const API_BASE = normalizeApiBase(import.meta.env.VITE_API_URL);
+
 // Shared Axios instance
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000", // Fallback for safety
+  baseURL: API_BASE,
   withCredentials: true,
 });
-
 // ✅ HELPER: Robustly find the token (Custom key OR Supabase default)
 const getSmartToken = () => {
   // 1. Try explicit 'auth_token' key
