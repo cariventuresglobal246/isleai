@@ -868,7 +868,7 @@ function Baje() {
         }
 
         // 2. ✅ Activities
-        const resAct = await api.get("/api/activities/public");
+        const resAct = await api.get("/api/public/activities");
         if (resAct.data && Array.isArray(resAct.data.data)) {
           setDbActivities(resAct.data.data);
         }
