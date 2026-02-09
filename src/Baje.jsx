@@ -860,7 +860,7 @@ function Baje() {
 
       try {
         // 1. Accommodations
-        const resAccom = await api.get("/api/listings/public");
+        const resAccom = await api.get("/public/listings");
         if (resAccom.data && Array.isArray(resAccom.data.data)) {
           setDbListings(resAccom.data.data);
         } else if (Array.isArray(resAccom.data)) {
