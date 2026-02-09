@@ -1,18 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
-// ✅ FIX: Use a different name for the source env var
+// ✅ FIXED: Removed self-reference
 const RAW_API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-
-// ✅ FIX: Normalize the separate variable, not itself
 const API_BASE = (() => {
-  const raw = (RAW_API_URL || "").trim();
+  const raw = RAW_API_URL.trim();
   if (!raw) return "";
   const withProto = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
   return withProto.replace(/\/+$/, "");
 })();
 
-export default function ChallengesTab({ S, accessToken, apiBase = "/api/tourist" }) {
+export default function ChallengesTab({ S, accessToken }) {
   // ✅ 1. Define API URL for the direct table connection
   // We use the TourismEntities router we set up in server.js
   const ENTITIES_API = API_BASE 
@@ -20,6 +18,7 @@ export default function ChallengesTab({ S, accessToken, apiBase = "/api/tourist"
     : "http://localhost:3000/api/tourism-entities";
 
   // ✅ 2. Updated Filters to match REAL columns in your 'entity_challenges' table
+  // (The generic router filters by matching column names, e.g. ?status=Live)
   const FILTERS = useMemo(
     () => [
       { key: "all", label: "All", params: {} },
@@ -71,6 +70,10 @@ export default function ChallengesTab({ S, accessToken, apiBase = "/api/tourist"
         
         // Build Params
         const params = { ...filterObj.params };
+        // If query exists, specific columns must be targeted. 
+        // Note: Generic CRUD usually needs specific 'ilike' logic for search.
+        // For now, we'll fetch list and filter client-side if needed, 
+        // or rely on exact matches if the backend supports it.
 
         const { data } = await axios.get(`${ENTITIES_API}/entity_challenges`, {
           ...axiosConfig,
@@ -94,11 +97,13 @@ export default function ChallengesTab({ S, accessToken, apiBase = "/api/tourist"
     return () => { mounted = false; };
   }, [activeFilter, accessToken, axiosConfig, ENTITIES_API, FILTERS]);
 
-  // ✅ 4. Join/Leave Actions
+  // ✅ 4. Join/Leave Actions (Keep these on the Tourist Controller)
+  // The generic table router doesn't know how to "join" a challenge (business logic).
   const handleAction = async (action, challengeId) => {
     if (!accessToken) return;
     try {
-      await axios.post(`${apiBase}/challenges/${challengeId}/${action}`, {}, axiosConfig);
+      // e.g. POST /api/tourist/challenges/:id/join
+      await axios.post(`${API_BASE}/tourist/challenges/${challengeId}/${action}`, {}, axiosConfig);
       
       setJoined((prev) => {
         const next = new Set(prev);
