@@ -655,6 +655,48 @@ const api = axios.create({
   withCredentials: false,
 });
 
+if (!import.meta.env.VITE_API_URL) {
+  console.error("VITE_API_URL is not set. Set it in your .env (e.g. VITE_API_URL=https://<your-worker-domain>)");
+}
+
+// --- API helpers (Cloudflare Worker friendly) ---
+// Tries a primary path, and if it 404/405s, retries the fallback path.
+// Useful when your deployed worker differs (e.g. /ask vs /api/ask).
+async function postWithFallback(pathPrimary, pathFallback, body, config) {
+  try {
+    return await api.post(pathPrimary, body, config);
+  } catch (e) {
+    const status = e?.response?.status;
+    if ((status === 404 || status === 405) && pathFallback && pathFallback !== pathPrimary) {
+      return await api.post(pathFallback, body, config);
+    }
+    throw e;
+  }
+}
+
+async function getWithFallback(pathPrimary, pathFallback, config) {
+  try {
+    return await api.get(pathPrimary, config);
+  } catch (e) {
+    const status = e?.response?.status;
+    if ((status === 404 || status === 405) && pathFallback && pathFallback !== pathPrimary) {
+      return await api.get(pathFallback, config);
+    }
+    throw e;
+  }
+}
+
+// Canonical paths for this project:
+// - server.js defines POST /ask (root)
+// - some deployments may expose POST /api/ask
+const ASK_PATH_PRIMARY = "/ask";
+const ASK_PATH_FALLBACK = "/api/ask";
+
+// - tourism entities are mounted at /api (server.js), so the most likely path is /api/listings/public
+// - keep a fallback in case your router uses /api/public/listings
+const PUBLIC_LISTINGS_PRIMARY = "/api/listings/public";
+const PUBLIC_LISTINGS_FALLBACK = "/api/public/listings";
+
 // ✅ HELPER: Robustly find the token (Custom key OR Supabase default)
 const getSmartToken = () => {
   // 1. Try explicit 'auth_token' key
@@ -848,7 +890,7 @@ function Baje() {
 
       try {
         // 1. Accommodations
-        const resAccom = await api.get("/api/listings/public");
+        const resAccom = await getWithFallback(PUBLIC_LISTINGS_PRIMARY, PUBLIC_LISTINGS_FALLBACK);
         if (resAccom.data && Array.isArray(resAccom.data.data)) {
           setDbListings(resAccom.data.data);
         } else if (Array.isArray(resAccom.data)) {
@@ -1200,7 +1242,7 @@ function Baje() {
     setIsLoading(true);
 
     try {
-      const res = await api.post('/api/ask', {
+      const res = await postWithFallback(ASK_PATH_PRIMARY, ASK_PATH_FALLBACK, {
         prompt: `${selectedCountry.name} ${activeAgent}: ${userMessage.content.replace(
           /^Main:\s*/,
           ''
