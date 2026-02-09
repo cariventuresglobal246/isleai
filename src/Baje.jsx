@@ -633,12 +633,31 @@ const API_BASE = (() => {
 })();
 
 // Shared Axios instance
+// IMPORTANT: Do NOT send cookies by default.
+// Your app uses Bearer tokens (localStorage), and sending credentials
+// forces strict CORS rules (Access-Control-Allow-Origin cannot be '*').
 const api = axios.create({
   baseURL: API_BASE,
-  withCredentials: true,
+  withCredentials: false,
+  headers: {
+    Accept: 'application/json',
+  },
+});
+
+// Auto-attach Bearer token if present.
+// This keeps requests authenticated without cookies.
+api.interceptors.request.use((config) => {
+  const token = getSmartToken();
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  // Make sure we never accidentally send cookies unless explicitly requested.
+  config.withCredentials = false;
+  return config;
 });
 // ✅ HELPER: Robustly find the token (Custom key OR Supabase default)
-const getSmartToken = () => {
+function getSmartToken() {
   // 1. Try explicit 'auth_token' key
   let token = localStorage.getItem('auth_token');
   if (token) return token;
@@ -662,7 +681,7 @@ const getSmartToken = () => {
   }
 
   return null;
-};
+}
 
 function Baje() {
   const location = useLocation();
