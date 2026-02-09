@@ -860,7 +860,7 @@ function Baje() {
 
       try {
         // 1. Accommodations
-        const resAccom = await api.get("/api/public/listings");
+        const resAccom = await api.get("/public/listings");
         if (resAccom.data && Array.isArray(resAccom.data.data)) {
           setDbListings(resAccom.data.data);
         } else if (Array.isArray(resAccom.data)) {
@@ -868,7 +868,7 @@ function Baje() {
         }
 
         // 2. ✅ Activities
-        const resAct = await api.get("/api/public/activities");
+        const resAct = await api.get("/public/activities");
         if (resAct.data && Array.isArray(resAct.data.data)) {
           setDbActivities(resAct.data.data);
         }
@@ -1212,14 +1212,26 @@ function Baje() {
     setIsLoading(true);
 
     try {
-      const res = await api.post('/ask', {
+      const token = getSmartToken();
+      if (!token) throw new Error("Missing auth token (please sign in again).");
+
+      const res = await api.post(
+        '/ask',
+        {
         prompt: `${selectedCountry.name} ${activeAgent}: ${userMessage.content.replace(
           /^Main:\s*/,
           ''
         )}`,
         userId,
         countryName: selectedCountry.name,
-      });
+      }
+        ,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const wantsMap =
         String(activeAgent || '').toLowerCase().includes('tour') && isMapIntent(inputValue);
