@@ -14,8 +14,8 @@ export default function ChallengesTab({ S, accessToken }) {
   // ✅ 1. Define API URL for the direct table connection
   // We use the TourismEntities router we set up in server.js
   const ENTITIES_API = API_BASE 
-    ? `${API_BASE}/api/tourism-entities` 
-    : "http://localhost:3000/api/tourism-entities";
+    ? `${API_BASE}/api` 
+    : "http://localhost:3000/api";
 
   // ✅ 2. Updated Filters to match REAL columns in your 'entity_challenges' table
   // (The generic router filters by matching column names, e.g. ?status=Live)
