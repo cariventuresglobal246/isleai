@@ -848,12 +848,7 @@ function Baje() {
 
       try {
         // 1. Accommodations
-        let resAccom;
-        try {
-          resAccom = await api.get("/public/listings");
-        } catch (e) {
-          resAccom = await api.get("/api/listings/public");
-        }
+        const resAccom = await api.get("/api/listings/public");
         if (resAccom.data && Array.isArray(resAccom.data.data)) {
           setDbListings(resAccom.data.data);
         } else if (Array.isArray(resAccom.data)) {
@@ -861,12 +856,7 @@ function Baje() {
         }
 
         // 2. ✅ Activities
-        let resAct;
-        try {
-          resAct = await api.get("/api/activities/public");
-        } catch (e) {
-          resAct = await api.get("/public/activities");
-        }
+        const resAct = await api.get("/api/activities/public");
         if (resAct.data && Array.isArray(resAct.data.data)) {
           setDbActivities(resAct.data.data);
         }
