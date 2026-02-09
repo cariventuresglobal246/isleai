@@ -1242,17 +1242,21 @@ function Baje() {
       // Log the actual data to your browser console to see the structure
       console.log("AI Response Data:", res.data);
 
-      const assistantMessage = {
-        id: uuidv4(),
-        role: 'assistant',
-        agent: activeAgent,
-        type: wantsMap ? 'map' : (res.data.responseType || 'text'),
-        title: wantsMap ? undefined : res.data.title,
-        mapEmbedUrl: res.data.mapEmbedUrl || fallbackMapEmbedUrl,
-        // Add res.data.message or res.data as fallbacks
-        content: wantsMap ? '' : (res.data.response || res.data.text || res.data.message || "I got a response, but couldn't read the text field."),
-        created_at: new Date().toISOString(),
-      };
+    const assistantMessage = {
+  id: uuidv4(),
+  role: 'assistant',
+  agent: activeAgent,
+  type: wantsMap ? 'map' : (res.data.responseType || 'text'),
+  title: wantsMap ? undefined : res.data.title,
+  mapEmbedUrl: res.data.mapEmbedUrl || fallbackMapEmbedUrl,
+  // NEW LOGIC: check if res.data is a string first, then check object properties
+  content: wantsMap 
+    ? '' 
+    : (typeof res.data === 'string' 
+        ? res.data 
+        : (res.data.response || res.data.text || 'No response')),
+  created_at: new Date().toISOString(),
+};
 
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (err) {
