@@ -1239,14 +1239,18 @@ function Baje() {
       const placeQuery = wantsMap ? extractPlaceQuery(inputValue, selectedCountry?.name) : '';
       const fallbackMapEmbedUrl = wantsMap ? buildGMapsEmbedUrl(placeQuery) : null;
 
+      // Log the actual data to your browser console to see the structure
+      console.log("AI Response Data:", res.data);
+
       const assistantMessage = {
         id: uuidv4(),
         role: 'assistant',
-        agent: activeAgent, // tag which agent answered
+        agent: activeAgent,
         type: wantsMap ? 'map' : (res.data.responseType || 'text'),
         title: wantsMap ? undefined : res.data.title,
         mapEmbedUrl: res.data.mapEmbedUrl || fallbackMapEmbedUrl,
-        content: wantsMap ? '' : (res.data.response || res.data.text || 'No response'),
+        // Add res.data.message or res.data as fallbacks
+        content: wantsMap ? '' : (res.data.response || res.data.text || res.data.message || "I got a response, but couldn't read the text field."),
         created_at: new Date().toISOString(),
       };
 
